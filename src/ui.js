@@ -14,7 +14,6 @@ export function initUI(cfg, act) {
   setupDayNightToggle();
   setupPriceBreakdown();
   setupOrderButton();
-  setupAIChatButton();
 }
 
 function buildConfigPanel() {
@@ -22,6 +21,15 @@ function buildConfigPanel() {
   if (!panel) return;
 
   panel.innerHTML = '';
+
+  // ── Panel Logo Header ──
+  const logoHeader = el('div', 'panel-logo-header');
+  const logoImg = document.createElement('img');
+  logoImg.src = '/images/cyberquad-logo.svg';
+  logoImg.alt = 'Cyberquad';
+  logoImg.className = 'panel-logo-img';
+  logoHeader.appendChild(logoImg);
+  panel.appendChild(logoHeader);
 
   // ── Quick Builds Section ──
   const autoSection = el('div', 'config-section auto-configure-section');
@@ -233,9 +241,19 @@ function createOptionSection(title, options, category, applyFn) {
   const optionsList = el('div', 'options-list');
 
   options.forEach((opt, i) => {
-    const optEl = el('button', `option-card ${i === 0 ? 'active' : ''}`);
+    const hasImg = !!opt.img;
+    const optEl = el('button', `option-card ${i === 0 ? 'active' : ''} ${hasImg ? 'option-card-img' : ''}`);
     optEl.setAttribute('data-category', category);
     optEl.setAttribute('data-option-id', opt.id);
+
+    if (hasImg) {
+      const thumb = document.createElement('img');
+      thumb.src = opt.img;
+      thumb.alt = opt.name;
+      thumb.className = 'option-thumb';
+      thumb.loading = 'lazy';
+      optEl.appendChild(thumb);
+    }
 
     const info = el('div', 'option-info');
     const name = el('span', 'option-name');

@@ -80,7 +80,7 @@ function init() {
   controls.maxDistance = 15;
   controls.maxPolarAngle = Math.PI / 2 - 0.05;
   controls.minPolarAngle = 0.2;
-  controls.target.set(0, 0.8, 0);
+  controls.target.set(-0.8, 0.8, 0);
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.5;
 
@@ -482,8 +482,8 @@ function loadModel() {
     });
 
     // Adjust camera to fit
-    controls.target.set(0, size.y * scale * 0.4, 0);
-    camera.position.set(5, 2.5, 6);
+    controls.target.set(-0.8, size.y * scale * 0.4, 0);
+    camera.position.set(4.2, 2.5, 6);
     controls.update();
   });
 }
@@ -573,7 +573,7 @@ function setCameraView(view) {
   let toPos, toTarget;
 
   const targetY = model ? model.position.y + 1.2 : 1.2;
-  toTarget = new THREE.Vector3(0, targetY, 0);
+  toTarget = new THREE.Vector3(-0.8, targetY, 0);
 
   switch (view) {
     case 'front':
@@ -640,6 +640,7 @@ function animate() {
       camera.position.y += (height - camera.position.y) * 0.02;
       // Subtle target sway
       const targetY = (model ? model.position.y + 1.2 : 1.2) + Math.sin(elapsed * 0.2) * 0.1;
+      controls.target.x += (-0.8 - controls.target.x) * 0.02;
       controls.target.y += (targetY - controls.target.y) * 0.02;
     }
   }

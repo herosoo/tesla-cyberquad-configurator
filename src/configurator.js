@@ -11,9 +11,9 @@ export const CONFIG = {
     { id: 'ultra-blue', name: 'Ultra Blue', color: '#1e3a5f', metalness: 0.95, roughness: 0.2, price: 2000 },
   ],
   wheels: [
-    { id: 'standard', name: 'Standard 20"', scale: 1.0, roughness: 0.5, price: 0, desc: 'All-terrain balanced' },
-    { id: 'offroad', name: 'Off-Road 22"', scale: 1.12, roughness: 0.7, price: 1500, desc: 'Maximum traction' },
-    { id: 'performance', name: 'Performance 19"', scale: 0.95, roughness: 0.3, price: 2000, desc: 'Track-focused grip' },
+    { id: 'standard', name: 'Standard 20"', scale: 1.0, roughness: 0.5, price: 0, desc: 'All-terrain balanced', img: '/images/wheel-standard.avif' },
+    { id: 'offroad', name: 'Off-Road 22"', scale: 1.12, roughness: 0.7, price: 1200, desc: 'Maximum traction', img: '/images/wheel-standard.avif' },
+    { id: 'performance', name: 'Performance 19"', scale: 0.95, roughness: 0.3, price: 2000, desc: 'Track-focused grip', img: '/images/wheel-performance.avif' },
   ],
   suspension: [
     { id: 'standard', name: 'Standard', heightOffset: 0, price: 0, desc: 'Comfort-tuned adaptive' },
@@ -21,9 +21,9 @@ export const CONFIG = {
     { id: 'offroad', name: 'Off-Road', heightOffset: 0.12, price: 3000, desc: 'Raised, long-travel' },
   ],
   cargo: [
-    { id: 'none', name: 'None', price: 0 },
-    { id: 'rear', name: 'Rear Storage', price: 800, desc: '15L sealed compartment' },
-    { id: 'extended', name: 'Extended Cargo', price: 1500, desc: '40L modular cargo system' },
+    { id: 'none', name: 'None', price: 0, img: '/images/cargo-default.avif' },
+    { id: 'rear', name: 'Rear Storage', price: 800, desc: '15L compartment', img: '/images/cargo-rear.avif' },
+    { id: 'extended', name: 'Extended Cargo', price: 1500, desc: '40L modular system', img: '/images/cargo-extended.avif' },
   ],
   rack: [
     { id: 'none', name: 'None', price: 0 },
