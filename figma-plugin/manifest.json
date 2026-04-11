@@ -1,0 +1,7 @@
+{
+  "name": "Tesla Cyberquad Configurator UI",
+  "id": "tesla-cyberquad-configurator",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"]
+}
