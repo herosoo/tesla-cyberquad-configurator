@@ -80,7 +80,7 @@ function init() {
   controls.maxDistance = 15;
   controls.maxPolarAngle = Math.PI / 2 - 0.05;
   controls.minPolarAngle = 0.2;
-  controls.target.set(-3.5, 0.8, 0);
+  controls.target.set(0, 0.8, 0);
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.5;
 
@@ -483,7 +483,7 @@ function loadModel() {
     });
 
     // Adjust camera to fit
-    controls.target.set(-3.5, size.y * scale * 0.4, 0);
+    controls.target.set(0, size.y * scale * 0.4, 0);
     camera.position.set(4.2, 2.5, 6);
     controls.update();
   });
@@ -574,24 +574,23 @@ function setCameraView(view) {
   let toPos, toTarget;
 
   const targetY = model ? model.position.y + 1.2 : 1.2;
-  toTarget = new THREE.Vector3(-3.5, targetY, 0);
+  toTarget = new THREE.Vector3(0, targetY, 0);
 
-  const tx = -3.5; // match camera target X
   switch (view) {
     case 'front':
-      toPos = new THREE.Vector3(tx, 2, 7);
+      toPos = new THREE.Vector3(0, 2, 7);
       break;
     case 'side':
-      toPos = new THREE.Vector3(tx + 7, 2, 0);
+      toPos = new THREE.Vector3(7, 2, 0);
       break;
     case 'rear':
-      toPos = new THREE.Vector3(tx, 2.5, -7);
+      toPos = new THREE.Vector3(0, 2.5, -7);
       break;
     case 'top':
-      toPos = new THREE.Vector3(tx, 8, 0.1);
+      toPos = new THREE.Vector3(0, 8, 0.1);
       break;
     default:
-      toPos = new THREE.Vector3(tx + 5, 2.5, 6);
+      toPos = new THREE.Vector3(5, 2.5, 6);
   }
 
   controls.autoRotate = false;
@@ -642,7 +641,7 @@ function animate() {
       camera.position.y += (height - camera.position.y) * 0.02;
       // Subtle target sway
       const targetY = (model ? model.position.y + 1.2 : 1.2) + Math.sin(elapsed * 0.2) * 0.1;
-      controls.target.x += (-3.5 - controls.target.x) * 0.02;
+      controls.target.x += (0 - controls.target.x) * 0.02;
       controls.target.y += (targetY - controls.target.y) * 0.02;
     }
   }

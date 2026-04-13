@@ -105,7 +105,8 @@ function buildConfigPanel() {
   logoHeader.appendChild(logoImg);
   panel.appendChild(logoHeader);
 
-  // ── Specs Bar ──
+  // ── Specs Card (matches other section cards) ──
+  const specsSection = el('div', 'config-section specs-section');
   const specsBar = el('div', 'specs-bar');
   const specsData = [
     { value: '60 mi', label: 'Range' },
@@ -122,7 +123,8 @@ function buildConfigPanel() {
     col.appendChild(lbl);
     specsBar.appendChild(col);
   });
-  panel.appendChild(specsBar);
+  specsSection.appendChild(specsBar);
+  panel.appendChild(specsSection);
 
   // ── Quick Builds Section (ONLY section with chevron) ──
   const autoSection = el('div', 'config-section auto-configure-section');
@@ -240,7 +242,7 @@ function buildConfigPanel() {
 
     if (c.price > 0) {
       const priceTag = el('span', 'swatch-price');
-      priceTag.textContent = `+$${c.price.toLocaleString()}`;
+      priceTag.textContent = `$${c.price.toLocaleString()}`;
       swatch.appendChild(priceTag);
     }
 
