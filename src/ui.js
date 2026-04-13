@@ -1,5 +1,51 @@
 import { CONFIG, BASE_PRICE } from './configurator.js';
 
+// ─── ATV Trail Database ───
+const ATV_TRAILS = [
+  // West
+  { id: 'moab-slickrock', name: 'Slickrock Trail', city: 'Moab', state: 'UT', lat: 38.5733, lng: -109.5498, difficulty: 'Hard', distance: 10.5, terrain: 'Sandstone', description: 'Iconic petrified sand dune trail with steep climbs, technical ledges, and panoramic canyon views.', preset: 'sport' },
+  { id: 'glamis-dunes', name: 'Imperial Sand Dunes', city: 'Glamis', state: 'CA', lat: 32.9582, lng: -115.1194, difficulty: 'Moderate', distance: 40, terrain: 'Sand Dunes', description: 'Vast open dune system perfect for high-speed desert riding and freestyle terrain.', preset: 'sport' },
+  { id: 'paiute-trail', name: 'Paiute ATV Trail', city: 'Marysvale', state: 'UT', lat: 38.4530, lng: -112.2288, difficulty: 'Moderate', distance: 275, terrain: 'Mountain', description: 'Sprawling trail network through alpine forests, meadows, and historic mining towns.', preset: 'hunting' },
+  { id: 'rubicon-trail', name: 'Rubicon Trail', city: 'Georgetown', state: 'CA', lat: 38.9755, lng: -120.2316, difficulty: 'Hard', distance: 22, terrain: 'Rocky', description: 'Legendary granite trail in the Sierra Nevada with extreme rock crawling sections.', preset: 'sport' },
+  { id: 'oregon-dunes', name: 'Oregon Dunes', city: 'Florence', state: 'OR', lat: 43.8926, lng: -124.1429, difficulty: 'Easy', distance: 30, terrain: 'Coastal Sand', description: 'Largest expanse of coastal sand dunes in North America with ocean-view riding.', preset: 'farm' },
+  { id: 'johnson-valley', name: 'Johnson Valley OHV', city: 'Lucerne Valley', state: 'CA', lat: 34.3614, lng: -116.4689, difficulty: 'Moderate', distance: 50, terrain: 'Desert', description: 'Open desert with dry lake beds, washes, and rocky hill climbs used for King of the Hammers.', preset: 'sport' },
+  // Midwest
+  { id: 'badlands-ohv', name: 'Badlands OHV Park', city: 'Attica', state: 'IN', lat: 40.2703, lng: -87.2481, difficulty: 'Moderate', distance: 800, terrain: 'Mixed', description: 'Sprawling off-road park with mud pits, hill climbs, trails, and open riding areas.', preset: 'farm' },
+  { id: 'wayne-national', name: 'Wayne National Forest', city: 'Nelsonville', state: 'OH', lat: 39.4314, lng: -82.2251, difficulty: 'Easy', distance: 75, terrain: 'Forest', description: 'Rolling Appalachian foothills with well-maintained ATV trails through hardwood forest.', preset: 'hunting' },
+  { id: 'hurley-trails', name: 'Iron County Trails', city: 'Hurley', state: 'WI', lat: 46.4497, lng: -90.1862, difficulty: 'Easy', distance: 100, terrain: 'Forest', description: 'Northern Wisconsin trail system through dense forest, connecting small towns and scenic lakes.', preset: 'hunting' },
+  { id: 'st-joe-forest', name: 'St. Joe National Forest', city: 'St. Maries', state: 'ID', lat: 47.3144, lng: -116.5627, difficulty: 'Moderate', distance: 60, terrain: 'Mountain Forest', description: 'Remote mountain trails through old-growth cedar groves with river crossings.', preset: 'hunting' },
+  // South
+  { id: 'hatfield-mccoy', name: 'Hatfield-McCoy Trails', city: 'Man', state: 'WV', lat: 37.7429, lng: -81.8747, difficulty: 'Moderate', distance: 700, terrain: 'Appalachian', description: 'Massive trail system across southern WV mountains — one of the largest ATV networks in the US.', preset: 'hunting' },
+  { id: 'brimstone', name: 'Brimstone Recreation', city: 'Huntsville', state: 'TN', lat: 36.4089, lng: -84.4914, difficulty: 'Hard', distance: 300, terrain: 'Mountain', description: 'Challenging Cumberland Plateau trails with creek crossings, mud holes, and cliff-side riding.', preset: 'sport' },
+  { id: 'windrock', name: 'Windrock Park', city: 'Oliver Springs', state: 'TN', lat: 36.0803, lng: -84.3191, difficulty: 'Hard', distance: 300, terrain: 'Rocky Mountain', description: 'Privately owned mountain park with extreme rock crawling and technical single-track trails.', preset: 'sport' },
+  { id: 'crosby-texas', name: 'Crosby MX Park', city: 'Crosby', state: 'TX', lat: 29.9238, lng: -95.0585, difficulty: 'Easy', distance: 15, terrain: 'Flat Prairie', description: 'Family-friendly open riding area near Houston with flat terrain and beginner-friendly loops.', preset: 'farm' },
+  { id: 'ocala-national', name: 'Ocala National Forest', city: 'Silver Springs', state: 'FL', lat: 29.1873, lng: -81.6542, difficulty: 'Easy', distance: 45, terrain: 'Flatwoods', description: 'Sandy pine flatwoods trails through subtropical forest with mild year-round riding.', preset: 'farm' },
+  { id: 'sam-houston', name: 'Sam Houston NF Trails', city: 'New Waverly', state: 'TX', lat: 30.5411, lng: -95.4838, difficulty: 'Easy', distance: 55, terrain: 'Pine Forest', description: 'East Texas piney woods with well-marked ATV routes and rolling gentle terrain.', preset: 'farm' },
+  // Northeast
+  { id: 'jericho-atv', name: 'Jericho ATV Festival', city: 'Berlin', state: 'NH', lat: 44.4678, lng: -71.2592, difficulty: 'Moderate', distance: 80, terrain: 'Mountain Forest', description: 'White Mountain trail network through birch and spruce forest with stunning fall foliage riding.', preset: 'hunting' },
+  { id: 'ride-the-wilds', name: 'Ride the Wilds', city: 'Colebrook', state: 'NH', lat: 44.8943, lng: -71.4959, difficulty: 'Easy', distance: 1000, terrain: 'Multi-Use', description: 'Largest ATV trail network in the Northeast connecting towns across the Great North Woods.', preset: 'farm' },
+  { id: 'pittsburg-trails', name: 'Pittsburg Ridge Runners', city: 'Pittsburg', state: 'NH', lat: 45.0834, lng: -71.4088, difficulty: 'Moderate', distance: 200, terrain: 'Ridge', description: 'Elevated ridge-line trails with panoramic views of the Connecticut Lakes region.', preset: 'hunting' },
+  { id: 'anthracite-trail', name: 'Anthracite Outdoor', city: 'Shamokin', state: 'PA', lat: 40.7890, lng: -76.5583, difficulty: 'Moderate', distance: 115, terrain: 'Coal Country', description: 'Reclaimed coal-mining land turned into a rugged trail system with unique terrain features.', preset: 'sport' },
+  // Northwest
+  { id: 'tillamook-forest', name: 'Tillamook State Forest', city: 'Tillamook', state: 'OR', lat: 45.5912, lng: -123.5384, difficulty: 'Moderate', distance: 35, terrain: 'Coastal Forest', description: 'Temperate rainforest trails with muddy creek crossings and moss-covered old-growth scenery.', preset: 'hunting' },
+  { id: 'cle-elum-trails', name: 'Cle Elum Ridge Trail', city: 'Cle Elum', state: 'WA', lat: 47.1953, lng: -120.9394, difficulty: 'Hard', distance: 28, terrain: 'Alpine', description: 'High-elevation Cascade Range trails with switchbacks, scree fields, and alpine meadows.', preset: 'sport' },
+  // Southwest
+  { id: 'sedona-trails', name: 'Sedona OHV Trails', city: 'Sedona', state: 'AZ', lat: 34.8697, lng: -111.7610, difficulty: 'Moderate', distance: 25, terrain: 'Red Rock', description: 'Stunning red rock desert trails winding through iconic Sedona canyon formations.', preset: 'sport' },
+  { id: 'ruidoso-trails', name: 'Lincoln NF Trails', city: 'Ruidoso', state: 'NM', lat: 33.3317, lng: -105.6728, difficulty: 'Easy', distance: 40, terrain: 'High Desert', description: 'Cool mountain trails in southern New Mexico with ponderosa pine and meadow riding.', preset: 'farm' },
+];
+
+const STATE_NAMES = {
+  AL:'alabama',AK:'alaska',AZ:'arizona',AR:'arkansas',CA:'california',CO:'colorado',
+  CT:'connecticut',DE:'delaware',FL:'florida',GA:'georgia',HI:'hawaii',ID:'idaho',
+  IL:'illinois',IN:'indiana',IA:'iowa',KS:'kansas',KY:'kentucky',LA:'louisiana',
+  ME:'maine',MD:'maryland',MA:'massachusetts',MI:'michigan',MN:'minnesota',MS:'mississippi',
+  MO:'missouri',MT:'montana',NE:'nebraska',NV:'nevada',NH:'new hampshire',NJ:'new jersey',
+  NM:'new mexico',NY:'new york',NC:'north carolina',ND:'north dakota',OH:'ohio',OK:'oklahoma',
+  OR:'oregon',PA:'pennsylvania',RI:'rhode island',SC:'south carolina',SD:'south dakota',
+  TN:'tennessee',TX:'texas',UT:'utah',VT:'vermont',VA:'virginia',WA:'washington',
+  WV:'west virginia',WI:'wisconsin',WY:'wyoming',
+};
+
 let configurator;
 let actions;
 
@@ -9,11 +55,39 @@ export function initUI(cfg, act) {
 
   buildConfigPanel();
   buildCompareModal();
+  buildTrailModal();
   updatePrice();
   setupViewButtons();
   setupDayNightToggle();
   setupPriceBreakdown();
   setupOrderButton();
+  setupAIChatButton();
+}
+
+function resetAllToDefaults() {
+  // Deselect all preset tabs
+  document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
+  // Hide rationale
+  const rc = document.getElementById('rationale-container');
+  if (rc) { rc.classList.remove('visible'); setTimeout(() => { rc.innerHTML = ''; }, 200); }
+  // Reset environment to default studio
+  actions.setEnvironment(null);
+  // Reset all options to first/default
+  configurator.applyColor(configurator.CONFIG.colors[0]);
+  configurator.applyWheels(configurator.CONFIG.wheels[0]);
+  configurator.applySuspension(configurator.CONFIG.suspension[0]);
+  configurator.applyCargo(configurator.CONFIG.cargo[0]);
+  configurator.applyRack(configurator.CONFIG.rack[0]);
+  configurator.applyProtection(configurator.CONFIG.protection[0]);
+  configurator.applyCharging([]);
+  configurator.applyConnectivity(configurator.CONFIG.connectivity[0]);
+  // Reset UI selections
+  document.querySelectorAll('.color-swatch').forEach((s, i) => s.classList.toggle('active', i === 0));
+  updateColorName(configurator.CONFIG.colors[0].name);
+  ['wheels','suspension','cargo','rack','protection','charging','connectivity'].forEach(cat => {
+    document.querySelectorAll(`[data-category="${cat}"]`).forEach((o, i) => o.classList.toggle('active', i === 0));
+  });
+  updatePrice();
 }
 
 function buildConfigPanel() {
@@ -31,10 +105,28 @@ function buildConfigPanel() {
   logoHeader.appendChild(logoImg);
   panel.appendChild(logoHeader);
 
-  // ── Quick Builds Section ──
+  // ── Specs Bar ──
+  const specsBar = el('div', 'specs-bar');
+  const specsData = [
+    { value: '60 mi', label: 'Range' },
+    { value: '60 mph', label: 'Top Speed' },
+    { value: '8.1 sec', label: '0-60 mph' },
+  ];
+  specsData.forEach(spec => {
+    const col = el('div', 'specs-col');
+    const val = el('div', 'specs-value');
+    val.textContent = spec.value;
+    const lbl = el('div', 'specs-label');
+    lbl.textContent = spec.label;
+    col.appendChild(val);
+    col.appendChild(lbl);
+    specsBar.appendChild(col);
+  });
+  panel.appendChild(specsBar);
+
+  // ── Quick Builds Section (ONLY section with chevron) ──
   const autoSection = el('div', 'config-section auto-configure-section');
 
-  // Header with chevron (collapsible) + reset button
   const autoHeader = el('button', 'section-header auto-configure-toggle');
   const autoTitleWrap = el('div', 'section-header-left');
   const autoTitle = el('span', 'section-title');
@@ -43,37 +135,6 @@ function buildConfigPanel() {
   autoHeader.appendChild(autoTitleWrap);
 
   const autoHeaderRight = el('div', 'section-header-right');
-
-  // Reset button
-  const resetBtn = el('button', 'preset-reset-btn');
-  resetBtn.textContent = 'Reset';
-  resetBtn.style.display = 'none';
-  resetBtn.onclick = (e) => {
-    e.stopPropagation();
-    // Deselect all tabs
-    document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
-    // Hide rationale
-    const rc = document.getElementById('rationale-container');
-    if (rc) { rc.classList.remove('visible'); setTimeout(() => { rc.innerHTML = ''; }, 200); }
-    // Reset all options to first/default
-    resetBtn.style.display = 'none';
-    configurator.applyColor(configurator.CONFIG.colors[0]);
-    configurator.applyWheels(configurator.CONFIG.wheels[0]);
-    configurator.applySuspension(configurator.CONFIG.suspension[0]);
-    configurator.applyCargo(configurator.CONFIG.cargo[0]);
-    configurator.applyRack(configurator.CONFIG.rack[0]);
-    configurator.applyProtection(configurator.CONFIG.protection[0]);
-    // Reset UI selections
-    document.querySelectorAll('.color-swatch').forEach((s, i) => s.classList.toggle('active', i === 0));
-    updateColorName(configurator.CONFIG.colors[0].name);
-    ['wheels','suspension','cargo','rack','protection'].forEach(cat => {
-      document.querySelectorAll(`[data-category="${cat}"]`).forEach((o, i) => o.classList.toggle('active', i === 0));
-    });
-    updatePrice();
-  };
-  autoHeaderRight.appendChild(resetBtn);
-
-  // Chevron
   const autoChevron = el('span', 'section-chevron');
   autoChevron.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   autoHeaderRight.appendChild(autoChevron);
@@ -90,10 +151,22 @@ function buildConfigPanel() {
     autoSection.classList.toggle('collapsed');
   };
 
-  // Tesla-style tab row (Cash / Lease / Finance pattern)
+  // Tab row: Default | Sport | Farm | Hunting
   const tabRow = el('div', 'preset-tab-row');
   const presets = configurator.PRESETS;
 
+  // Default tab
+  const defaultTab = el('button', 'preset-tab');
+  defaultTab.setAttribute('data-preset', 'default');
+  defaultTab.textContent = 'Default';
+  defaultTab.onclick = () => {
+    document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
+    defaultTab.classList.add('active');
+    resetAllToDefaults();
+  };
+  tabRow.appendChild(defaultTab);
+
+  // Preset tabs (Sport, Farm, Hunting)
   Object.entries(presets).forEach(([id, preset]) => {
     const tab = el('button', 'preset-tab');
     tab.setAttribute('data-preset', id);
@@ -101,21 +174,17 @@ function buildConfigPanel() {
 
     tab.onclick = () => {
       const wasActive = tab.classList.contains('active');
-
       document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
 
       if (wasActive) {
-        // Unselect — hide rationale, hide reset
         const rc = document.getElementById('rationale-container');
         if (rc) { rc.classList.remove('visible'); setTimeout(() => { rc.innerHTML = ''; }, 200); }
-        resetBtn.style.display = 'none';
+        actions.setEnvironment(null);
         return;
       }
 
       tab.classList.add('active');
-      resetBtn.style.display = '';
-
-      // Show rationale
+      actions.setEnvironment(id);
       showRationale(autoSection, preset);
 
       configurator.applyPreset(id, (category, option) => {
@@ -138,23 +207,24 @@ function buildConfigPanel() {
 
   autoContent.appendChild(tabRow);
 
-  // Rationale placeholder (filled on tab click)
+  // Rationale placeholder
   const rationaleContainer = el('div', 'rationale-container');
   rationaleContainer.id = 'rationale-container';
   autoContent.appendChild(rationaleContainer);
 
   autoSection.appendChild(autoContent);
 
-  // "View & Compare Features" link
+  // "Compare Features" link inside Quick Builds
   const compareLink = el('button', 'compare-link');
-  compareLink.innerHTML = `<span>View &amp; Compare Features</span><svg width="8" height="12" viewBox="0 0 8 12" fill="none"><path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  compareLink.innerHTML = `<span>Compare Features</span><svg width="8" height="12" viewBox="0 0 8 12" fill="none"><path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   compareLink.onclick = () => openCompareModal();
   autoSection.appendChild(compareLink);
 
   panel.appendChild(autoSection);
 
-  // ── Color Section ──
-  const colorSection = createSection('Exterior Color');
+  // ── Exterior Color Section (no chevron) ──
+  const colorSection = createSection('Exterior Color', false);
+  const colorContent = colorSection.querySelector('.section-content');
   const colorGrid = el('div', 'color-grid');
 
   CONFIG.colors.forEach((c, i) => {
@@ -177,7 +247,6 @@ function buildConfigPanel() {
     swatch.onclick = () => {
       document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
       swatch.classList.add('active');
-      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
       configurator.applyColor(c);
       updateColorName(c.name);
       updatePrice();
@@ -190,59 +259,72 @@ function buildConfigPanel() {
   colorName.id = 'color-name';
   colorName.textContent = CONFIG.colors[0].name;
 
-  colorSection.appendChild(colorGrid);
-  colorSection.appendChild(colorName);
+  colorContent.appendChild(colorGrid);
+  colorContent.appendChild(colorName);
   panel.appendChild(colorSection);
 
-  // ── Wheels Section ──
+  // ── Wheels Section (no chevron) ──
   panel.appendChild(createOptionSection('Wheels', CONFIG.wheels, 'wheels', configurator.applyWheels));
 
-  // ── Suspension Section ──
+  // ── Suspension Section (no chevron) ──
   panel.appendChild(createOptionSection('Suspension', CONFIG.suspension, 'suspension', configurator.applySuspension));
 
-  // ── Cargo Section ──
+  // ── Cargo Section (no chevron) ──
   panel.appendChild(createOptionSection('Cargo', CONFIG.cargo, 'cargo', configurator.applyCargo));
 
-  // ── Rack Section ──
-  panel.appendChild(createOptionSection('Rack', CONFIG.rack, 'rack', configurator.applyRack));
-
-  // ── Protection Section ──
+  // ── Protection Section (no chevron) ──
   panel.appendChild(createOptionSection('Protection', CONFIG.protection, 'protection', configurator.applyProtection));
+
+  // ── Charging Section (NEW, no chevron, multi-select) ──
+  panel.appendChild(createOptionSection('Charging', CONFIG.charging, 'charging', configurator.applyCharging, true));
+
+  // ── Stay Connected Anywhere Section (NEW, no chevron) ──
+  const connSection = createOptionSection('Stay Connected Anywhere', CONFIG.connectivity, 'connectivity', configurator.applyConnectivity);
+
+  // "Find ATV Trails" link at bottom of this section
+  const trailLink = el('button', 'trail-link');
+  trailLink.innerHTML = `<span>Find ATV Trails</span><svg width="8" height="12" viewBox="0 0 8 12" fill="none"><path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  trailLink.onclick = () => openTrailModal();
+  connSection.appendChild(trailLink);
+  panel.appendChild(connSection);
+
 }
 
-function createSection(title) {
+function createSection(title, collapsible = false) {
   const section = el('div', 'config-section');
-  const header = el('button', 'section-header');
+  const header = el('div', `section-header ${collapsible ? '' : 'section-header-static'}`);
 
   const titleEl = el('span', 'section-title');
   titleEl.textContent = title;
   header.appendChild(titleEl);
 
-  const chevron = el('span', 'section-chevron');
-  chevron.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  header.appendChild(chevron);
+  const content = el('div', 'section-content open');
 
-  const content = el('div', 'section-content');
-  content.classList.add('open');
-
-  header.onclick = () => {
-    content.classList.toggle('open');
-    section.classList.toggle('collapsed');
-  };
+  if (collapsible) {
+    const chevron = el('span', 'section-chevron');
+    chevron.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    header.appendChild(chevron);
+    header.style.cursor = 'pointer';
+    header.onclick = () => {
+      content.classList.toggle('open');
+      section.classList.toggle('collapsed');
+    };
+  }
 
   section.appendChild(header);
   section.appendChild(content);
   return section;
 }
 
-function createOptionSection(title, options, category, applyFn) {
-  const section = createSection(title);
+function createOptionSection(title, options, category, applyFn, multiSelect = false) {
+  const section = createSection(title, false);
   const content = section.querySelector('.section-content');
   const optionsList = el('div', 'options-list');
 
   options.forEach((opt, i) => {
     const hasImg = !!opt.img;
-    const optEl = el('button', `option-card ${i === 0 ? 'active' : ''} ${hasImg ? 'option-card-img' : ''}`);
+    const isFirstActive = !multiSelect && i === 0;
+    const optEl = el('button', `option-card ${isFirstActive ? 'active' : ''} ${hasImg ? 'option-card-img' : ''}`);
     optEl.setAttribute('data-category', category);
     optEl.setAttribute('data-option-id', opt.id);
 
@@ -269,16 +351,23 @@ function createOptionSection(title, options, category, applyFn) {
     optEl.appendChild(info);
 
     const priceEl = el('span', 'option-price');
-    priceEl.textContent = opt.price === 0 ? 'Included' : `+$${opt.price.toLocaleString()}`;
+    priceEl.textContent = opt.price === 0 ? 'Included' : `$${opt.price.toLocaleString()}`;
     optEl.appendChild(priceEl);
 
-    optEl.onclick = () => {
-      document.querySelectorAll(`[data-category="${category}"]`).forEach(o => o.classList.remove('active'));
-      optEl.classList.add('active');
-      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-      applyFn(opt);
-      updatePrice();
-    };
+    if (multiSelect) {
+      optEl.onclick = () => {
+        optEl.classList.toggle('active');
+        applyFn(opt, true);
+        updatePrice();
+      };
+    } else {
+      optEl.onclick = () => {
+        document.querySelectorAll(`[data-category="${category}"]`).forEach(o => o.classList.remove('active'));
+        optEl.classList.add('active');
+        applyFn(opt);
+        updatePrice();
+      };
+    }
 
     optionsList.appendChild(optEl);
   });
@@ -405,6 +494,8 @@ function updatePriceBreakdown() {
     { label: `Cargo: ${state.cargo.name}`, value: state.cargo.price },
     { label: `Rack: ${state.rack.name}`, value: state.rack.price },
     { label: `Protection: ${state.protection.name}`, value: state.protection.price },
+    ...state.charging.map(c => ({ label: `Charging: ${c.name}`, value: c.price })),
+    { label: `Connectivity: ${state.connectivity.name}`, value: state.connectivity.price },
   ].filter(l => l.value > 0);
 
   tooltip.innerHTML = lines.map(l =>
@@ -488,8 +579,8 @@ function buildCompareModal() {
     name.textContent = p.name;
     cell.appendChild(name);
     const price = el('div', 'compare-preset-price');
-    const total = configurator.BASE_PRICE + p.color.price + p.wheels.price
-      + p.suspension.price + p.cargo.price + p.rack.price + p.protection.price;
+    const total = configurator.BASE_PRICE + (p.color?.price || 0) + (p.wheels?.price || 0)
+      + (p.suspension?.price || 0) + (p.cargo?.price || 0) + (p.rack?.price || 0) + (p.protection?.price || 0);
     price.textContent = `$${total.toLocaleString()}`;
     cell.appendChild(price);
     const desc = el('div', 'compare-preset-desc');
@@ -597,6 +688,7 @@ function setupAIChatButton() {
   const appUI = document.getElementById('app-ui');
   if (!appUI) return;
 
+  // Chat button (left bottom)
   const chatBtn = el('button', 'ai-chat-btn');
   chatBtn.title = 'Ask AI about your build';
   chatBtn.innerHTML = `
@@ -609,12 +701,383 @@ function setupAIChatButton() {
     <span class="ai-chat-label">AI</span>
   `;
 
+  // Chat panel
+  const chatPanel = el('div', 'ai-chat-panel');
+  chatPanel.innerHTML = `
+    <div class="ai-chat-panel-header">
+      <span class="ai-chat-panel-title">AI Assistant</span>
+      <button class="ai-chat-panel-close">&times;</button>
+    </div>
+    <div class="ai-chat-messages" id="ai-chat-messages">
+      <div class="ai-chat-msg ai-msg">
+        <div class="ai-chat-bubble">Hi! I can help you configure your Cyberquad. Ask me about builds, trails, or specs.</div>
+      </div>
+    </div>
+    <div class="ai-chat-input-row">
+      <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="Ask about your build..." />
+      <button class="ai-chat-send" id="ai-chat-send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  `;
+
   chatBtn.onclick = () => {
-    chatBtn.classList.toggle('open');
-    // Placeholder — future: open chat panel
+    chatPanel.classList.add('open');
+    chatBtn.classList.add('hidden');
   };
 
+  // Close button inside panel
+  chatPanel.querySelector('.ai-chat-panel-close').onclick = () => {
+    chatPanel.classList.remove('open');
+    chatBtn.classList.remove('hidden');
+  };
+
+  // ─── Smart AI Response Engine ───
+  function getAIResponse(query) {
+    const q = query.toLowerCase();
+    const state = configurator.getState();
+
+    // Detect intent
+    if (q.match(/hunt|deer|elk|stealth|quiet|camo|wildlife|blind/)) {
+      return {
+        text: 'For hunting, I\'d recommend the **Hunting Build** — Dark Stainless color blends into the environment, Off-Road suspension handles rough terrain silently, and the Full Guard protects the undercarriage on creek beds.',
+        preset: 'hunting',
+        ctaText: 'Apply Hunting Build',
+      };
+    }
+    if (q.match(/farm|ranch|work|haul|cargo|carry|utility|agriculture|livestock/)) {
+      return {
+        text: 'For farm work, the **Farm Build** is ideal — Off-Road 22" wheels grip muddy terrain, Extended Cargo carries tools and supplies, and the Utility Rack handles heavy loads.',
+        preset: 'farm',
+        ctaText: 'Apply Farm Build',
+      };
+    }
+    if (q.match(/sport|fast|speed|race|track|performance|quick|trail racing/)) {
+      return {
+        text: 'For performance riding, try the **Sport Build** — Performance suspension lowers the ride height for sharp cornering, Performance 19" wheels maximize grip, and Skid Plates protect at speed.',
+        preset: 'sport',
+        ctaText: 'Apply Sport Build',
+      };
+    }
+    if (q.match(/trail|ride|where|location|route|path/)) {
+      return {
+        text: 'Great question! We have 24 curated ATV trails across the US. You can search by location, difficulty, and terrain type. Want me to open the trail finder?',
+        action: 'openTrails',
+        ctaText: 'Open Trail Finder',
+      };
+    }
+    if (q.match(/range|battery|charge|how far|distance|mile/)) {
+      return {
+        text: 'The Cyberquad has a **60-mile range** on a full charge. With the Universal Home Charger ($1,990), you get up to 44 mi range/hr. The Mobile Charger ($380) provides 30 mi range/hr — great for on-the-go.',
+        config: { category: 'charging', optionId: 'home' },
+        ctaText: 'Add Home Charger',
+      };
+    }
+    if (q.match(/speed|fast|mph|acceleration|0.60|quick/)) {
+      return {
+        text: 'The Cyberquad reaches **60 mph top speed** and does 0-60 in **8.1 seconds**. For maximum performance, the Sport Build with Performance suspension and 19" wheels gives you the sharpest handling.',
+        preset: 'sport',
+        ctaText: 'Apply Sport Build',
+      };
+    }
+    if (q.match(/color|paint|look|stainless|red|blue|orange/)) {
+      const colors = configurator.CONFIG.colors;
+      const colorList = colors.map(c => `${c.name}${c.price > 0 ? ' ($' + c.price.toLocaleString() + ')' : ''}`).join(', ');
+      return {
+        text: `You currently have **${state.color.name}** selected. Available colors: ${colorList}. Mars Red is popular for Sport builds, Dark Stainless for Hunting.`,
+      };
+    }
+    if (q.match(/wheel|tire|rim|traction|grip/)) {
+      return {
+        text: 'We offer 3 wheel options: **Standard 20"** (included) for balanced riding, **Off-Road 22"** ($1,200) for maximum traction, and **Performance 19"** ($2,000) for track-focused grip.',
+      };
+    }
+    if (q.match(/price|cost|how much|total|budget|cheap|expensive/)) {
+      const total = configurator.getTotalPrice();
+      return {
+        text: `Your current build is **$${total.toLocaleString()}** (base $3,990). You can customize each category or try a Quick Build preset to see bundled pricing.`,
+      };
+    }
+    if (q.match(/satellite|connect|spacex|gps|signal|remote/)) {
+      return {
+        text: 'The **Space X Satellite connection** ($600) keeps you connected even in the most remote locations — perfect for backcountry hunting or remote farm work.',
+        config: { category: 'connectivity', optionId: 'satellite' },
+        ctaText: 'Add Satellite Connection',
+      };
+    }
+    if (q.match(/protect|guard|skid|armor|underb/)) {
+      return {
+        text: '**Skid Plates** ($700) provide underbody armor for light trail riding. **Full Guard** ($1,400) is the complete protection package — recommended for off-road and hunting builds.',
+        config: { category: 'protection', optionId: 'full' },
+        ctaText: 'Add Full Guard',
+      };
+    }
+    if (q.match(/recommend|suggest|best|should|what do you/)) {
+      return {
+        text: 'It depends on how you\'ll use your Cyberquad! Tell me about your riding style:\n• **Trail racing or sport?** → Sport Build\n• **Farm or ranch work?** → Farm Build\n• **Hunting or outdoors?** → Hunting Build\nOr ask me about specific features!',
+      };
+    }
+    if (q.match(/hi|hello|hey|sup|what can you/)) {
+      return {
+        text: 'Hey! I\'m your Cyberquad AI assistant. I can help you:\n• Choose the right build for your needs\n• Find ATV-friendly trails near you\n• Compare specs and pricing\n• Recommend specific accessories\n\nWhat are you looking for?',
+      };
+    }
+    if (q.match(/reset|default|start over|clear/)) {
+      return {
+        text: 'I\'ll reset your configurator back to the default settings.',
+        action: 'resetToDefault',
+        ctaText: 'Reset to Default',
+      };
+    }
+    // Fallback
+    return {
+      text: 'I can help with build recommendations, trail finding, specs, and pricing. Try asking things like:\n• "What\'s the best build for hunting?"\n• "How far can I ride on a charge?"\n• "Find trails near Tennessee"\n• "What colors are available?"',
+    };
+  }
+
+  function addAIMessage(messages, response) {
+    const aiMsg = el('div', 'ai-chat-msg ai-msg');
+    const aiBubble = el('div', 'ai-chat-bubble');
+
+    // Render markdown-style bold
+    aiBubble.innerHTML = response.text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+    aiMsg.appendChild(aiBubble);
+
+    // Add CTA button if response has an action
+    if (response.ctaText) {
+      const ctaBtn = el('button', 'ai-chat-cta');
+      ctaBtn.textContent = response.ctaText;
+      ctaBtn.onclick = () => {
+        ctaBtn.disabled = true;
+        ctaBtn.textContent = 'Applied ✓';
+        ctaBtn.classList.add('applied');
+
+        if (response.preset) {
+          // Apply preset via Quick Builds tab
+          document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
+          const matchTab = document.querySelector(`.preset-tab[data-preset="${response.preset}"]`);
+          if (matchTab) matchTab.click();
+        } else if (response.action === 'openTrails') {
+          openTrailModal();
+        } else if (response.action === 'resetToDefault') {
+          resetAllToDefaults();
+        } else if (response.config) {
+          // Apply a specific option
+          const { category, optionId } = response.config;
+          const opt = configurator.CONFIG[category]?.find(o => o.id === optionId);
+          if (opt) {
+            if (category === 'charging') {
+              configurator.applyCharging(opt, true);
+              const card = document.querySelector(`[data-category="${category}"][data-option-id="${optionId}"]`);
+              if (card) card.classList.add('active');
+            } else {
+              const applyFns = {
+                connectivity: configurator.applyConnectivity,
+                protection: configurator.applyProtection,
+                cargo: configurator.applyCargo,
+                wheels: configurator.applyWheels,
+                suspension: configurator.applySuspension,
+              };
+              if (applyFns[category]) {
+                applyFns[category](opt);
+                document.querySelectorAll(`[data-category="${category}"]`).forEach(o => o.classList.remove('active'));
+                const card = document.querySelector(`[data-category="${category}"][data-option-id="${optionId}"]`);
+                if (card) card.classList.add('active');
+              }
+            }
+            updatePrice();
+          }
+        }
+      };
+      aiMsg.appendChild(ctaBtn);
+    }
+
+    messages.appendChild(aiMsg);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  const sendMessage = () => {
+    const input = document.getElementById('ai-chat-input');
+    const messages = document.getElementById('ai-chat-messages');
+    if (!input || !messages || !input.value.trim()) return;
+
+    const query = input.value.trim();
+
+    // Add user message
+    const userMsg = el('div', 'ai-chat-msg user-msg');
+    const userBubble = el('div', 'ai-chat-bubble');
+    userBubble.textContent = query;
+    userMsg.appendChild(userBubble);
+    messages.appendChild(userMsg);
+    input.value = '';
+    messages.scrollTop = messages.scrollHeight;
+
+    // Typing indicator
+    const typingMsg = el('div', 'ai-chat-msg ai-msg');
+    const typingBubble = el('div', 'ai-chat-bubble ai-typing');
+    typingBubble.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+    typingMsg.appendChild(typingBubble);
+    messages.appendChild(typingMsg);
+    messages.scrollTop = messages.scrollHeight;
+
+    // Simulate AI thinking delay
+    setTimeout(() => {
+      messages.removeChild(typingMsg);
+      const response = getAIResponse(query);
+      addAIMessage(messages, response);
+    }, 800 + Math.random() * 600);
+  };
+
+  chatPanel.querySelector('#ai-chat-send').onclick = sendMessage;
+  chatPanel.querySelector('#ai-chat-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  appUI.appendChild(chatPanel);
   appUI.appendChild(chatBtn);
+}
+
+// ─── Trail Finder Modal ───
+function buildTrailModal() {
+  const modal = document.getElementById('trail-modal');
+  const body = document.getElementById('trail-body');
+  const closeBtn = document.getElementById('trail-close');
+  const searchInput = document.getElementById('trail-search');
+  if (!modal || !body || !closeBtn || !searchInput) return;
+
+  // Close handlers
+  closeBtn.onclick = closeTrailModal;
+  modal.onclick = (e) => {
+    if (e.target === modal) closeTrailModal();
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeTrailModal();
+  });
+
+  // Difficulty tab handlers
+  document.querySelectorAll('.trail-tab').forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll('.trail-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderTrails();
+    };
+  });
+
+  // Search input (debounced)
+  let searchTimeout;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(renderTrails, 200);
+  });
+
+  renderTrails();
+}
+
+function renderTrails() {
+  const body = document.getElementById('trail-body');
+  if (!body) return;
+  body.innerHTML = '';
+
+  const query = (document.getElementById('trail-search')?.value || '').toLowerCase();
+  const activeDifficulty = document.querySelector('.trail-tab.active')?.dataset.difficulty || 'all';
+
+  const filtered = ATV_TRAILS.filter(trail => {
+    const matchesDifficulty = activeDifficulty === 'all' || trail.difficulty === activeDifficulty;
+    const stateFull = STATE_NAMES[trail.state] || '';
+    const searchStr = `${trail.name} ${trail.city} ${trail.state} ${stateFull} ${trail.terrain} ${trail.description}`.toLowerCase();
+    const matchesSearch = !query || searchStr.includes(query);
+    return matchesDifficulty && matchesSearch;
+  });
+
+  if (filtered.length === 0) {
+    const noResults = el('div', 'trail-no-results');
+    noResults.textContent = 'No trails found. Try a different search or filter.';
+    body.appendChild(noResults);
+    return;
+  }
+
+  filtered.forEach(trail => body.appendChild(createTrailCard(trail)));
+}
+
+function createTrailCard(trail) {
+  const card = el('div', 'trail-card');
+
+  // Header: name + difficulty badge
+  const header = el('div', 'trail-card-header');
+  const name = el('div', 'trail-card-name');
+  name.textContent = trail.name;
+  header.appendChild(name);
+
+  const badge = el('span', `trail-difficulty-badge difficulty-${trail.difficulty.toLowerCase()}`);
+  badge.textContent = trail.difficulty;
+  header.appendChild(badge);
+  card.appendChild(header);
+
+  // Location
+  const location = el('div', 'trail-card-location');
+  location.textContent = `${trail.city}, ${trail.state}`;
+  card.appendChild(location);
+
+  // Meta: distance + terrain
+  const meta = el('div', 'trail-card-meta');
+  const distSpan = el('span', '');
+  distSpan.textContent = `${trail.distance} mi`;
+  const dot = el('span', '');
+  dot.textContent = '\u00B7';
+  const terrainSpan = el('span', '');
+  terrainSpan.textContent = trail.terrain;
+  meta.appendChild(distSpan);
+  meta.appendChild(dot);
+  meta.appendChild(terrainSpan);
+  card.appendChild(meta);
+
+  // Description
+  const desc = el('div', 'trail-card-desc');
+  desc.textContent = trail.description;
+  card.appendChild(desc);
+
+  // Actions: directions + recommended build
+  const actionsRow = el('div', 'trail-card-actions');
+
+  const directionsLink = document.createElement('a');
+  directionsLink.className = 'trail-directions-link';
+  directionsLink.href = `https://www.google.com/maps/dir/?api=1&destination=${trail.lat},${trail.lng}`;
+  directionsLink.target = '_blank';
+  directionsLink.rel = 'noopener noreferrer';
+  directionsLink.innerHTML = `<span>Get Directions</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+  actionsRow.appendChild(directionsLink);
+
+  const presetName = configurator.PRESETS[trail.preset]?.name || trail.preset;
+  const buildBadge = el('button', 'trail-build-badge');
+  buildBadge.textContent = `${presetName} Build`;
+  buildBadge.onclick = () => {
+    document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
+    const matchTab = document.querySelector(`.preset-tab[data-preset="${trail.preset}"]`);
+    if (matchTab) matchTab.click();
+    closeTrailModal();
+  };
+  actionsRow.appendChild(buildBadge);
+
+  card.appendChild(actionsRow);
+  return card;
+}
+
+function openTrailModal() {
+  const modal = document.getElementById('trail-modal');
+  if (modal) {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeTrailModal() {
+  const modal = document.getElementById('trail-modal');
+  if (modal) {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
 }
 
 function el(tag, className) {

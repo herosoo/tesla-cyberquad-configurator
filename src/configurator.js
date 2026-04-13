@@ -21,7 +21,6 @@ export const CONFIG = {
     { id: 'offroad', name: 'Off-Road', heightOffset: 0.12, price: 3000, desc: 'Raised, long-travel' },
   ],
   cargo: [
-    { id: 'none', name: 'None', price: 0, img: '/images/cargo-default.avif' },
     { id: 'rear', name: 'Rear Storage', price: 800, desc: '15L compartment', img: '/images/cargo-rear.avif' },
     { id: 'extended', name: 'Extended Cargo', price: 1500, desc: '40L modular system', img: '/images/cargo-extended.avif' },
   ],
@@ -31,9 +30,15 @@ export const CONFIG = {
     { id: 'sport', name: 'Sport Rack', price: 900, desc: 'Aerodynamic low-profile' },
   ],
   protection: [
-    { id: 'none', name: 'None', price: 0 },
     { id: 'skid', name: 'Skid Plates', price: 700, desc: 'Underbody armor' },
     { id: 'full', name: 'Full Guard', price: 1400, desc: 'Complete protection package' },
+  ],
+  charging: [
+    { id: 'home', name: 'Universal Home Charger', price: 1990, desc: 'Up to 44 mi range/hr', img: '/images/charger-home-38f6c8.png' },
+    { id: 'mobile', name: 'Mobile Charger', price: 380, desc: 'Up to 30 mi range/hr', img: '/images/charger-mobile.png' },
+  ],
+  connectivity: [
+    { id: 'satellite', name: 'Space X Satellite connection', price: 600, desc: 'Satellite-powered connection' },
   ],
 };
 
@@ -47,6 +52,8 @@ export function createConfigurator(model, scene) {
     cargo: CONFIG.cargo[0],
     rack: CONFIG.rack[0],
     protection: CONFIG.protection[0],
+    charging: [],  // multi-select: array of selected charging options
+    connectivity: CONFIG.connectivity[0],
   };
 
   // Collect body meshes from model
@@ -267,6 +274,29 @@ export function createConfigurator(model, scene) {
     createAccessoryMesh('protection', protConfig);
   }
 
+  function applyCharging(chargingConfig, toggle = false) {
+    if (toggle) {
+      // Multi-select toggle
+      const idx = state.charging.findIndex(c => c.id === chargingConfig.id);
+      if (idx >= 0) {
+        state.charging.splice(idx, 1);
+      } else {
+        state.charging.push(chargingConfig);
+      }
+    } else {
+      // Direct set (for presets)
+      if (Array.isArray(chargingConfig)) {
+        state.charging = [...chargingConfig];
+      } else {
+        state.charging = chargingConfig.id === 'none' ? [] : [chargingConfig];
+      }
+    }
+  }
+
+  function applyConnectivity(connConfig) {
+    state.connectivity = connConfig;
+  }
+
   function getTotalPrice() {
     return BASE_PRICE
       + state.color.price
@@ -274,7 +304,9 @@ export function createConfigurator(model, scene) {
       + state.suspension.price
       + state.cargo.price
       + state.rack.price
-      + state.protection.price;
+      + state.protection.price
+      + state.charging.reduce((sum, c) => sum + c.price, 0)
+      + state.connectivity.price;
   }
 
   function getState() {
@@ -289,7 +321,7 @@ export function createConfigurator(model, scene) {
       color: CONFIG.colors.find(c => c.id === 'mars-red'),
       wheels: CONFIG.wheels.find(w => w.id === 'performance'),
       suspension: CONFIG.suspension.find(s => s.id === 'performance'),
-      cargo: CONFIG.cargo.find(c => c.id === 'none'),
+      cargo: CONFIG.cargo[0],
       rack: CONFIG.rack.find(r => r.id === 'sport'),
       protection: CONFIG.protection.find(p => p.id === 'skid'),
       rationale: [
@@ -367,6 +399,8 @@ export function createConfigurator(model, scene) {
       () => { applyCargo(preset.cargo); onStepComplete?.('cargo', preset.cargo); },
       () => { applyRack(preset.rack); onStepComplete?.('rack', preset.rack); },
       () => { applyProtection(preset.protection); onStepComplete?.('protection', preset.protection); },
+      () => { applyCharging(preset.charging || CONFIG.charging[0]); onStepComplete?.('charging', preset.charging || CONFIG.charging[0]); },
+      () => { applyConnectivity(preset.connectivity || CONFIG.connectivity[0]); onStepComplete?.('connectivity', preset.connectivity || CONFIG.connectivity[0]); },
     ];
 
     // Apply sequentially with delays for visual drama
@@ -382,6 +416,8 @@ export function createConfigurator(model, scene) {
     applyCargo,
     applyRack,
     applyProtection,
+    applyCharging,
+    applyConnectivity,
     applyPreset,
     getTotalPrice,
     getState,

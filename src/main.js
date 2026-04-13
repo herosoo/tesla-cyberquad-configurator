@@ -80,7 +80,7 @@ function init() {
   controls.maxDistance = 15;
   controls.maxPolarAngle = Math.PI / 2 - 0.05;
   controls.minPolarAngle = 0.2;
-  controls.target.set(-0.8, 0.8, 0);
+  controls.target.set(-2.2, 0.8, 0);
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.5;
 
@@ -271,9 +271,9 @@ function createGround() {
   const groundGeo = new THREE.PlaneGeometry(80, 80);
   const groundMat = new THREE.MeshStandardMaterial({
     color: 0x555555,
-    roughness: 0.2,
-    metalness: 0.6,
-    envMapIntensity: 0.7,
+    roughness: 0.55,
+    metalness: 0.15,
+    envMapIntensity: 0.3,
   });
   groundMesh = new THREE.Mesh(groundGeo, groundMat);
   groundMesh.rotation.x = -Math.PI / 2;
@@ -284,7 +284,7 @@ function createGround() {
   // Grid overlay
   const gridHelper = new THREE.GridHelper(80, 108, 0x999999, 0xaaaaaa);
   gridHelper.position.y = 0.001;
-  gridHelper.material.opacity = 0.4;
+  gridHelper.material.opacity = 0.15;
   gridHelper.material.transparent = true;
   gridHelper.material.depthWrite = false;
   scene.add(gridHelper);
@@ -479,10 +479,11 @@ function loadModel() {
     initUI(configurator, {
       toggleDayNight,
       setCameraView,
+      setEnvironment,
     });
 
     // Adjust camera to fit
-    controls.target.set(-0.8, size.y * scale * 0.4, 0);
+    controls.target.set(-2.2, size.y * scale * 0.4, 0);
     camera.position.set(4.2, 2.5, 6);
     controls.update();
   });
@@ -573,7 +574,7 @@ function setCameraView(view) {
   let toPos, toTarget;
 
   const targetY = model ? model.position.y + 1.2 : 1.2;
-  toTarget = new THREE.Vector3(-0.8, targetY, 0);
+  toTarget = new THREE.Vector3(-2.2, targetY, 0);
 
   switch (view) {
     case 'front':
@@ -640,7 +641,7 @@ function animate() {
       camera.position.y += (height - camera.position.y) * 0.02;
       // Subtle target sway
       const targetY = (model ? model.position.y + 1.2 : 1.2) + Math.sin(elapsed * 0.2) * 0.1;
-      controls.target.x += (-0.8 - controls.target.x) * 0.02;
+      controls.target.x += (-2.2 - controls.target.x) * 0.02;
       controls.target.y += (targetY - controls.target.y) * 0.02;
     }
   }
@@ -656,4 +657,129 @@ function animate() {
 // ─── Start ───
 init();
 
-export { scene, camera, renderer, controls, model };
+// ─── Environment Presets ───
+const ENV_PRESETS = {
+  default: {
+    top: new THREE.Color(0xe8e8e8),
+    mid: new THREE.Color(0xe0e0e0),
+    bottom: new THREE.Color(0xd8d8d8),
+    fog: new THREE.Color(0xe0e0e0),
+    fogDensity: 0.012,
+    ground: new THREE.Color(0x555555),
+    groundRoughness: 0.2,
+    groundMetalness: 0.6,
+    sunIntensity: 2.0,
+    ambientIntensity: 0.25,
+    overheadIntensity: 8.0,
+    sunColor: 0xfff4ea,
+    exposure: 1.8,
+  },
+  sport: {
+    // Dramatic mountain / rock terrain — cool contrast
+    top: new THREE.Color(0x6b7d95),
+    mid: new THREE.Color(0x3d4f63),
+    bottom: new THREE.Color(0x252d38),
+    fog: new THREE.Color(0x4a5568),
+    fogDensity: 0.008,
+    ground: new THREE.Color(0x3a3a40),
+    groundRoughness: 0.55,
+    groundMetalness: 0.3,
+    sunIntensity: 2.5,
+    ambientIntensity: 0.2,
+    overheadIntensity: 6.0,
+    sunColor: 0xd4e0f0,
+    exposure: 1.6,
+  },
+  farm: {
+    // Open golden field — warm bright pastoral
+    top: new THREE.Color(0x7cb5e3),
+    mid: new THREE.Color(0xd4c69a),
+    bottom: new THREE.Color(0x8b7d4a),
+    fog: new THREE.Color(0xd4c5a0),
+    fogDensity: 0.006,
+    ground: new THREE.Color(0x6b7e3d),
+    groundRoughness: 0.75,
+    groundMetalness: 0.05,
+    sunIntensity: 2.8,
+    ambientIntensity: 0.35,
+    overheadIntensity: 7.0,
+    sunColor: 0xffe8c0,
+    exposure: 2.0,
+  },
+  hunting: {
+    // Dense forest — dark moody misty
+    top: new THREE.Color(0x4a5a4a),
+    mid: new THREE.Color(0x253025),
+    bottom: new THREE.Color(0x141c14),
+    fog: new THREE.Color(0x2a352a),
+    fogDensity: 0.025,
+    ground: new THREE.Color(0x2a3528),
+    groundRoughness: 0.8,
+    groundMetalness: 0.05,
+    sunIntensity: 1.0,
+    ambientIntensity: 0.15,
+    overheadIntensity: 3.5,
+    sunColor: 0xd4dcc8,
+    exposure: 1.4,
+  },
+};
+
+let currentEnvId = 'default';
+
+function setEnvironment(presetId) {
+  const envId = presetId || 'default';
+  if (envId === currentEnvId) return;
+
+  const env = ENV_PRESETS[envId];
+  if (!env) return;
+
+  currentEnvId = envId;
+
+  const duration = 1400;
+  const start = performance.now();
+
+  // Snapshot current values
+  const bgU = bgMesh.material.uniforms;
+  const fromTop = bgU.uTopColor.value.clone();
+  const fromMid = bgU.uMidColor.value.clone();
+  const fromBottom = bgU.uBottomColor.value.clone();
+  const fromFog = scene.fog.color.clone();
+  const fromFogDensity = scene.fog.density;
+  const fromGround = groundMesh.material.color.clone();
+  const fromGroundRoughness = groundMesh.material.roughness;
+  const fromGroundMetalness = groundMesh.material.metalness;
+  const fromSunIntensity = sunLight.intensity;
+  const fromAmbientIntensity = ambientLight.intensity;
+  const fromOverheadIntensity = overheadSoftbox.intensity;
+  const fromSunColor = sunLight.color.clone();
+  const fromExposure = renderer.toneMappingExposure;
+
+  const toSunColor = new THREE.Color(env.sunColor);
+
+  function animateEnv() {
+    const elapsed = performance.now() - start;
+    const t = Math.min(elapsed / duration, 1);
+    const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+    bgU.uTopColor.value.lerpColors(fromTop, env.top, ease);
+    bgU.uMidColor.value.lerpColors(fromMid, env.mid, ease);
+    bgU.uBottomColor.value.lerpColors(fromBottom, env.bottom, ease);
+    scene.fog.color.lerpColors(fromFog, env.fog, ease);
+    scene.fog.density = fromFogDensity + (env.fogDensity - fromFogDensity) * ease;
+    groundMesh.material.color.lerpColors(fromGround, env.ground, ease);
+    groundMesh.material.roughness = fromGroundRoughness + (env.groundRoughness - fromGroundRoughness) * ease;
+    groundMesh.material.metalness = fromGroundMetalness + (env.groundMetalness - fromGroundMetalness) * ease;
+    sunLight.intensity = fromSunIntensity + (env.sunIntensity - fromSunIntensity) * ease;
+    ambientLight.intensity = fromAmbientIntensity + (env.ambientIntensity - fromAmbientIntensity) * ease;
+    overheadSoftbox.intensity = fromOverheadIntensity + (env.overheadIntensity - fromOverheadIntensity) * ease;
+    sunLight.color.lerpColors(fromSunColor, toSunColor, ease);
+    fillLight.color.lerpColors(fromSunColor, toSunColor, ease);
+    renderer.toneMappingExposure = fromExposure + (env.exposure - fromExposure) * ease;
+
+    if (t < 1) requestAnimationFrame(animateEnv);
+  }
+
+  animateEnv();
+}
+
+export { scene, camera, renderer, controls, model, setEnvironment };

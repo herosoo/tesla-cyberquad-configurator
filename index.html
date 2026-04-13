@@ -83,6 +83,28 @@
     </div>
   </div>
 
+  <!-- Trail Finder Modal -->
+  <div id="trail-modal" class="trail-modal">
+    <div class="trail-modal-inner">
+      <div class="trail-header">
+        <h2 class="trail-title">Find ATV Trails</h2>
+        <div class="trail-header-right">
+          <button class="trail-close" id="trail-close">&times;</button>
+        </div>
+      </div>
+      <div class="trail-filters">
+        <input type="text" id="trail-search" class="trail-search" placeholder="Search by trail name, city, or state..." />
+        <div class="trail-difficulty-tabs">
+          <button class="trail-tab active" data-difficulty="all">All</button>
+          <button class="trail-tab" data-difficulty="Easy">Easy</button>
+          <button class="trail-tab" data-difficulty="Moderate">Moderate</button>
+          <button class="trail-tab" data-difficulty="Hard">Hard</button>
+        </div>
+      </div>
+      <div id="trail-body" class="trail-body"></div>
+    </div>
+  </div>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
