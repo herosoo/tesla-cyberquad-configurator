@@ -353,7 +353,11 @@ function createOptionSection(title, options, category, applyFn, multiSelect = fa
     optEl.appendChild(info);
 
     const priceEl = el('span', 'option-price');
-    priceEl.textContent = opt.price === 0 ? 'Included' : `$${opt.price.toLocaleString()}`;
+    if (opt.price === 0) {
+      priceEl.style.display = 'none';
+    } else {
+      priceEl.textContent = `$${opt.price.toLocaleString()}`;
+    }
     optEl.appendChild(priceEl);
 
     if (multiSelect) {

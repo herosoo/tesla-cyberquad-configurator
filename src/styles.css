@@ -571,7 +571,7 @@ body.night-mode .section-title {
 .color-grid {
   display: flex;
   gap: 10px;
-  padding: 0 20px 8px;
+  padding: 8px 20px 8px;
   flex-wrap: wrap;
 }
 
@@ -671,13 +671,13 @@ body.night-mode .option-card:hover {
 
 .option-card.active {
   border: 2px solid #171A20;
-  background: transparent;
+  background: #F2F2F2;
   padding: 17px 19px; /* compensate for 2px border */
 }
 
 body.night-mode .option-card.active {
   border-color: #f0f0f0;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .option-info {
@@ -737,13 +737,13 @@ body.night-mode .option-card.active .option-price {
   height: 72px;
   padding: 12px 16px;
   gap: 8px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .option-card-img.active {
   background: #F2F2F2;
   padding: 11px 15px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 body.night-mode .option-card-img.active {
@@ -781,6 +781,11 @@ body.night-mode .option-card-img.active {
 .specs-col {
   flex: 1;
   text-align: left;
+  padding-left: 8px;
+}
+
+.specs-col:first-child {
+  padding-left: 0;
 }
 
 .specs-value {
