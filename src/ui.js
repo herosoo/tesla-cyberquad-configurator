@@ -556,20 +556,6 @@ function buildCompareModal() {
   const presets = configurator.PRESETS;
   const presetEntries = Object.entries(presets);
 
-  // Build tab row
-  const tabRow = el('div', 'compare-tab-row');
-  presetEntries.forEach(([id, p], i) => {
-    const tab = el('button', `compare-tab ${i === 0 ? 'active' : ''}`);
-    tab.setAttribute('data-preset', id);
-    tab.textContent = p.name;
-    tab.onclick = () => {
-      document.querySelectorAll('.compare-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-    };
-    tabRow.appendChild(tab);
-  });
-  body.appendChild(tabRow);
-
   // Column headers (preset name + total price)
   const headerRow = el('div', 'compare-row compare-row-header');
   headerRow.appendChild(el('div', 'compare-label')); // empty label cell
@@ -619,7 +605,6 @@ function buildCompareModal() {
     { label: 'Cargo', get: (p) => p.cargo.name },
     { label: 'Rack', get: (p) => p.rack.name },
     { label: 'Protection', get: (p) => p.protection.name },
-    { label: 'Color', get: (p) => p.color.name },
   ];
 
   const equipHeader = el('div', 'compare-row compare-row-divider');

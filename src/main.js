@@ -80,7 +80,7 @@ function init() {
   controls.maxDistance = 15;
   controls.maxPolarAngle = Math.PI / 2 - 0.05;
   controls.minPolarAngle = 0.2;
-  controls.target.set(-2.2, 0.8, 0);
+  controls.target.set(-3.5, 0.8, 0);
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.5;
 
@@ -271,9 +271,9 @@ function createGround() {
   const groundGeo = new THREE.PlaneGeometry(80, 80);
   const groundMat = new THREE.MeshStandardMaterial({
     color: 0x555555,
-    roughness: 0.55,
-    metalness: 0.15,
-    envMapIntensity: 0.3,
+    roughness: 0.85,
+    metalness: 0.05,
+    envMapIntensity: 0.08,
   });
   groundMesh = new THREE.Mesh(groundGeo, groundMat);
   groundMesh.rotation.x = -Math.PI / 2;
@@ -483,7 +483,7 @@ function loadModel() {
     });
 
     // Adjust camera to fit
-    controls.target.set(-2.2, size.y * scale * 0.4, 0);
+    controls.target.set(-3.5, size.y * scale * 0.4, 0);
     camera.position.set(4.2, 2.5, 6);
     controls.update();
   });
@@ -574,23 +574,24 @@ function setCameraView(view) {
   let toPos, toTarget;
 
   const targetY = model ? model.position.y + 1.2 : 1.2;
-  toTarget = new THREE.Vector3(-2.2, targetY, 0);
+  toTarget = new THREE.Vector3(-3.5, targetY, 0);
 
+  const tx = -3.5; // match camera target X
   switch (view) {
     case 'front':
-      toPos = new THREE.Vector3(0, 2, 7);
+      toPos = new THREE.Vector3(tx, 2, 7);
       break;
     case 'side':
-      toPos = new THREE.Vector3(7, 2, 0);
+      toPos = new THREE.Vector3(tx + 7, 2, 0);
       break;
     case 'rear':
-      toPos = new THREE.Vector3(0, 2.5, -7);
+      toPos = new THREE.Vector3(tx, 2.5, -7);
       break;
     case 'top':
-      toPos = new THREE.Vector3(0, 8, 0.1);
+      toPos = new THREE.Vector3(tx, 8, 0.1);
       break;
     default:
-      toPos = new THREE.Vector3(5, 2.5, 6);
+      toPos = new THREE.Vector3(tx + 5, 2.5, 6);
   }
 
   controls.autoRotate = false;
@@ -641,7 +642,7 @@ function animate() {
       camera.position.y += (height - camera.position.y) * 0.02;
       // Subtle target sway
       const targetY = (model ? model.position.y + 1.2 : 1.2) + Math.sin(elapsed * 0.2) * 0.1;
-      controls.target.x += (-2.2 - controls.target.x) * 0.02;
+      controls.target.x += (-3.5 - controls.target.x) * 0.02;
       controls.target.y += (targetY - controls.target.y) * 0.02;
     }
   }
@@ -675,15 +676,15 @@ const ENV_PRESETS = {
     exposure: 1.8,
   },
   sport: {
-    // Dramatic mountain / rock terrain — cool contrast
-    top: new THREE.Color(0x6b7d95),
-    mid: new THREE.Color(0x3d4f63),
-    bottom: new THREE.Color(0x252d38),
-    fog: new THREE.Color(0x4a5568),
-    fogDensity: 0.008,
-    ground: new THREE.Color(0x3a3a40),
-    groundRoughness: 0.55,
-    groundMetalness: 0.3,
+    // Sport preset — lighting only, background stays default light gray
+    top: new THREE.Color(0xe8e8e8),
+    mid: new THREE.Color(0xe0e0e0),
+    bottom: new THREE.Color(0xd8d8d8),
+    fog: new THREE.Color(0xe0e0e0),
+    fogDensity: 0.012,
+    ground: new THREE.Color(0x555555),
+    groundRoughness: 0.2,
+    groundMetalness: 0.6,
     sunIntensity: 2.5,
     ambientIntensity: 0.2,
     overheadIntensity: 6.0,
@@ -691,15 +692,15 @@ const ENV_PRESETS = {
     exposure: 1.6,
   },
   farm: {
-    // Open golden field — warm bright pastoral
-    top: new THREE.Color(0x7cb5e3),
-    mid: new THREE.Color(0xd4c69a),
-    bottom: new THREE.Color(0x8b7d4a),
-    fog: new THREE.Color(0xd4c5a0),
-    fogDensity: 0.006,
-    ground: new THREE.Color(0x6b7e3d),
-    groundRoughness: 0.75,
-    groundMetalness: 0.05,
+    // Farm preset — lighting only, background stays default light gray
+    top: new THREE.Color(0xe8e8e8),
+    mid: new THREE.Color(0xe0e0e0),
+    bottom: new THREE.Color(0xd8d8d8),
+    fog: new THREE.Color(0xe0e0e0),
+    fogDensity: 0.012,
+    ground: new THREE.Color(0x555555),
+    groundRoughness: 0.2,
+    groundMetalness: 0.6,
     sunIntensity: 2.8,
     ambientIntensity: 0.35,
     overheadIntensity: 7.0,
@@ -707,15 +708,15 @@ const ENV_PRESETS = {
     exposure: 2.0,
   },
   hunting: {
-    // Dense forest — dark moody misty
-    top: new THREE.Color(0x4a5a4a),
-    mid: new THREE.Color(0x253025),
-    bottom: new THREE.Color(0x141c14),
-    fog: new THREE.Color(0x2a352a),
-    fogDensity: 0.025,
-    ground: new THREE.Color(0x2a3528),
-    groundRoughness: 0.8,
-    groundMetalness: 0.05,
+    // Hunting preset — lighting only, background stays default light gray
+    top: new THREE.Color(0xe8e8e8),
+    mid: new THREE.Color(0xe0e0e0),
+    bottom: new THREE.Color(0xd8d8d8),
+    fog: new THREE.Color(0xe0e0e0),
+    fogDensity: 0.012,
+    ground: new THREE.Color(0x555555),
+    groundRoughness: 0.2,
+    groundMetalness: 0.6,
     sunIntensity: 1.0,
     ambientIntensity: 0.15,
     overheadIntensity: 3.5,

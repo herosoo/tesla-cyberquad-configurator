@@ -247,7 +247,7 @@ body.night-mode .view-btn.active {
   position: absolute;
   top: 80px;
   right: 24px;
-  bottom: 70px;
+  bottom: 68px;
   width: 340px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1415,7 +1415,7 @@ body.night-mode .ai-chat-btn {
 /* ─── AI Chat Panel ─── */
 .ai-chat-panel {
   position: fixed;
-  bottom: 76px;
+  bottom: 16px;
   left: 24px;
   width: 340px;
   max-height: 440px;
