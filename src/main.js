@@ -422,10 +422,15 @@ function loadModel() {
         // Assign PBR materials based on part classification
         const newMat = new THREE.MeshStandardMaterial({ envMapIntensity: 1.0 });
 
-        if (name.includes('wheel') || name.includes('tire') || name.includes('tyre')) {
+        if (name.includes('wheel') || name.includes('tire') || name.includes('tyre') || name.includes('rim')) {
           newMat.color = new THREE.Color(0x1a1a1a);
           newMat.roughness = 0.85;
           newMat.metalness = 0.0;
+          newMat.transparent = false;
+          newMat.opacity = 1.0;
+          newMat.side = THREE.DoubleSide;
+          newMat.depthWrite = true;
+          newMat.alphaTest = 0;
         } else if (name.includes('frame') || name.includes('swing') || name.includes('axle') ||
                    name.includes('spring') || name.includes('shock') || name.includes('a-arm') ||
                    name.includes('linkage') || name.includes('bracket') || name.includes('hub') ||
@@ -480,6 +485,7 @@ function loadModel() {
       toggleDayNight,
       setCameraView,
       setEnvironment,
+      highlightPart,
     });
 
     // Adjust camera to fit
@@ -611,6 +617,138 @@ function setCameraView(view) {
   }
 
   animateCamera();
+}
+
+// ─── Highlight Part (Yellow flash + smooth camera transition to face part) ───
+// - Always animates from CURRENT camera pose (preserves continuity, no resets)
+// - Interruptible: a new highlight cancels the previous mid-flight without snapping
+// - No automatic return: camera stays at the highlighted part until next interaction
+let activeHighlight = null;
+
+function highlightPart(category) {
+  if (!configurator || !model) return;
+  const meshes = configurator.getCategoryMeshes(category);
+  if (!meshes || meshes.length === 0) return;
+
+  // Interrupt any in-progress highlight: stop animations, revert ITS emissive,
+  // but DO NOT touch the camera — the new transition starts from where we are now.
+  if (activeHighlight) {
+    activeHighlight.cancel();
+    activeHighlight = null;
+  }
+
+  // Save original emissive state for these meshes (per-highlight, so cancellation
+  // of an earlier one cleanly restores its meshes even if a new highlight overlaps)
+  const originals = meshes.map(m => ({
+    mesh: m,
+    emissive: m.material.emissive ? m.material.emissive.clone() : new THREE.Color(0x000000),
+    emissiveIntensity: m.material.emissiveIntensity != null ? m.material.emissiveIntensity : 1,
+  }));
+
+  // Apply yellow emissive immediately
+  const HIGHLIGHT_COLOR = new THREE.Color(0xffd400);
+  meshes.forEach(m => {
+    if (!m.material.emissive) m.material.emissive = new THREE.Color();
+    m.material.emissive.copy(HIGHLIGHT_COLOR);
+    m.material.emissiveIntensity = 0.7;
+    m.material.needsUpdate = true;
+  });
+
+  // Compute part bounding box & center
+  const partBox = new THREE.Box3();
+  meshes.forEach(m => partBox.expandByObject(m));
+  const partCenter = partBox.getCenter(new THREE.Vector3());
+  const partSize = partBox.getSize(new THREE.Vector3());
+  const maxDim = Math.max(partSize.x, partSize.y, partSize.z);
+
+  // Compute ideal viewing direction so the part faces the camera
+  const modelBox = new THREE.Box3().setFromObject(model);
+  const modelCenter = modelBox.getCenter(new THREE.Vector3());
+  const offset = partCenter.clone().sub(modelCenter);
+
+  let viewDir = new THREE.Vector3(offset.x, 0, offset.z);
+  if (viewDir.length() < 0.3) {
+    // Part is near center (wheels overall, body) → flattering 3/4 view
+    viewDir.set(1, 0, 1);
+  }
+  viewDir.normalize();
+
+  const elevation = 0.35;
+  const viewDir3D = new THREE.Vector3(viewDir.x, elevation, viewDir.z).normalize();
+  const distance = Math.max(maxDim * 3.5, 3.5);
+
+  // FROM = current camera pose (preserves continuity from any prior state)
+  const fromPos = camera.position.clone();
+  const fromTarget = controls.target.clone();
+
+  // TO = ideal pose facing the part
+  const toPos = partCenter.clone().add(viewDir3D.multiplyScalar(distance));
+  const toTarget = partCenter.clone();
+
+  // Disable auto-rotate / cinematic idle so they don't fight the transition
+  controls.autoRotate = false;
+  isUserInteracting = true;
+
+  let cancelled = false;
+  let activeRaf = null;
+  let holdTimeout = null;
+
+  function smoothEase(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  function animateTo(srcPos, srcTarget, dstPos, dstTarget, dur, onDone) {
+    const start = performance.now();
+    function tick() {
+      if (cancelled) return;
+      const elapsed = performance.now() - start;
+      const t = Math.min(elapsed / dur, 1);
+      const ease = smoothEase(t);
+      camera.position.lerpVectors(srcPos, dstPos, ease);
+      controls.target.lerpVectors(srcTarget, dstTarget, ease);
+      controls.update();
+      if (t < 1) {
+        activeRaf = requestAnimationFrame(tick);
+      } else {
+        onDone?.();
+      }
+    }
+    tick();
+  }
+
+  function revertEmissive() {
+    originals.forEach(({ mesh, emissive, emissiveIntensity }) => {
+      if (mesh.material.emissive) mesh.material.emissive.copy(emissive);
+      mesh.material.emissiveIntensity = emissiveIntensity;
+      mesh.material.needsUpdate = true;
+    });
+  }
+
+  // Phase 1: Smooth move from CURRENT pose to part view (1500ms)
+  // Phase 2: Hold for 5500ms with emissive ON
+  // Phase 3: Revert emissive only — camera STAYS at part view (no auto-return)
+  animateTo(fromPos, fromTarget, toPos, toTarget, 1500, () => {
+    if (cancelled) return;
+    holdTimeout = setTimeout(() => {
+      if (cancelled) return;
+      revertEmissive();
+      // Leave camera at the part view; user can drag freely
+      // Don't reset isUserInteracting — let OrbitControls 'end' event handle it on next drag
+      activeHighlight = null;
+    }, 5500);
+  });
+
+  activeHighlight = {
+    cancel: () => {
+      cancelled = true;
+      if (activeRaf) cancelAnimationFrame(activeRaf);
+      if (holdTimeout) clearTimeout(holdTimeout);
+      revertEmissive();
+      // Camera stays exactly where it is — DO NOT snap back
+      // The next highlight (which triggered this cancel) will read camera.position
+      // as its own fromPos, giving a continuous transition.
+    },
+  };
 }
 
 // ─── Resize ───

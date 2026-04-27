@@ -62,6 +62,165 @@ export function initUI(cfg, act) {
   setupPriceBreakdown();
   setupOrderButton();
   setupAIChatButton();
+  setupProgressIndicator();
+}
+
+// ─── Progress Indicator (vertical dots on right edge of side menu) ───
+function setupProgressIndicator() {
+  const wrapper = document.querySelector('.config-panel-wrapper');
+  if (!wrapper) return;
+  const sections = Array.from(document.querySelectorAll('#config-panel [data-progress-section]'));
+  if (sections.length === 0) return;
+
+  // Build indicator
+  const indicator = document.createElement('div');
+  indicator.className = 'progress-indicator';
+
+  sections.forEach((section, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('data-section-index', i);
+    dot.setAttribute('aria-label', section.getAttribute('data-progress-section'));
+    dot.title = section.getAttribute('data-progress-section');
+    dot.onclick = () => {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    indicator.appendChild(dot);
+  });
+
+  document.body.appendChild(indicator);
+
+  // Scroll-position-based tracking — more reliable than ratio-only when several
+  // small sections are fully visible together (which made the last dot never win).
+  function updateActiveDot() {
+    const dots = indicator.querySelectorAll('.progress-dot');
+    let activeIndex = 0;
+
+    // Edge case: scrolled to bottom → force the last section to be active.
+    // Tolerance of 4px handles subpixel rounding.
+    const atBottom = wrapper.scrollTop + wrapper.clientHeight >= wrapper.scrollHeight - 4;
+    if (atBottom) {
+      activeIndex = sections.length - 1;
+    } else {
+      // Pick the last section whose top has passed a "reading line"
+      // 25% down from the wrapper's top edge.
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const readingLine = wrapperRect.top + wrapperRect.height * 0.25;
+      sections.forEach((s, i) => {
+        const r = s.getBoundingClientRect();
+        if (r.top <= readingLine) activeIndex = i;
+      });
+    }
+
+    dots.forEach((d, i) => {
+      d.classList.toggle('active', i === activeIndex);
+    });
+  }
+
+  wrapper.addEventListener('scroll', updateActiveDot, { passive: true });
+  window.addEventListener('resize', updateActiveDot);
+  // Initial paint after layout settles
+  requestAnimationFrame(updateActiveDot);
+}
+
+// Switch to Custom tab if a Sport/Farm/Hunting preset is currently active,
+// then refresh the Custom summary so the user always sees their current changes.
+// Preserves all option selections — only updates the tab + summary panel.
+function markAsCustom() {
+  const activePresetTab = document.querySelector('.preset-tab.active');
+  const presetId = activePresetTab?.getAttribute('data-preset');
+
+  if (presetId !== 'custom') {
+    document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
+    const customTab = document.querySelector('.preset-tab[data-preset="custom"]');
+    if (customTab) customTab.classList.add('active');
+  }
+
+  // Always refresh the summary when we mark as custom (tab switch or option change)
+  showCustomSummary();
+}
+
+// Render the user's custom-build summary into the rationale container.
+// Shows only options that differ from the factory default, with friendly
+// explanations of what each change does.
+function showCustomSummary() {
+  const container = document.getElementById('rationale-container');
+  if (!container || !configurator) return;
+
+  const state = configurator.getState();
+  const CONFIG = configurator.CONFIG;
+  const changes = [];
+
+  if (state.color && state.color.id !== CONFIG.colors[0].id) {
+    changes.push({ feature: state.color.name, reason: 'Custom exterior color finish' });
+  }
+  if (state.wheels && state.wheels.id !== CONFIG.wheels[0].id) {
+    changes.push({ feature: state.wheels.name, reason: state.wheels.desc });
+  }
+  if (state.suspension && state.suspension.id !== CONFIG.suspension[0].id) {
+    changes.push({ feature: state.suspension.name, reason: state.suspension.desc });
+  }
+  if (state.cargo) {
+    changes.push({ feature: state.cargo.name, reason: state.cargo.desc });
+  }
+  if (state.protection) {
+    changes.push({ feature: state.protection.name, reason: state.protection.desc });
+  }
+  if (state.charging && state.charging.length > 0) {
+    state.charging.forEach(c => {
+      changes.push({ feature: c.name, reason: c.desc });
+    });
+  }
+  if (state.connectivity && state.connectivity.id !== CONFIG.connectivity[0].id) {
+    changes.push({ feature: state.connectivity.name, reason: state.connectivity.desc });
+  }
+
+  // Animate out → rebuild → animate in
+  container.classList.remove('visible');
+
+  setTimeout(() => {
+    container.innerHTML = '';
+
+    if (changes.length === 0) {
+      // No changes — leave panel empty/hidden so it doesn't add visual clutter
+      return;
+    }
+
+    const header = el('div', 'rationale-header');
+    const label = el('span', 'rationale-label');
+    label.textContent = 'Your custom build';
+    header.appendChild(label);
+
+    const subtitle = el('span', 'rationale-subtitle');
+    subtitle.textContent = `${changes.length} change${changes.length > 1 ? 's' : ''} from default`;
+    header.appendChild(subtitle);
+    container.appendChild(header);
+
+    const list = el('div', 'rationale-list');
+    changes.forEach(item => {
+      const row = el('div', 'rationale-row');
+
+      const dot = el('span', 'rationale-dot');
+      row.appendChild(dot);
+
+      const text = el('div', 'rationale-text');
+      const feature = el('span', 'rationale-feature');
+      feature.textContent = item.feature;
+      text.appendChild(feature);
+
+      if (item.reason) {
+        const reason = el('span', 'rationale-reason');
+        reason.textContent = ' — ' + item.reason;
+        text.appendChild(reason);
+      }
+
+      row.appendChild(text);
+      list.appendChild(row);
+    });
+    container.appendChild(list);
+
+    requestAnimationFrame(() => container.classList.add('visible'));
+  }, 150);
 }
 
 function resetAllToDefaults() {
@@ -76,16 +235,20 @@ function resetAllToDefaults() {
   configurator.applyColor(configurator.CONFIG.colors[0]);
   configurator.applyWheels(configurator.CONFIG.wheels[0]);
   configurator.applySuspension(configurator.CONFIG.suspension[0]);
-  configurator.applyCargo(configurator.CONFIG.cargo[0]);
+  configurator.applyCargo(null);
   configurator.applyRack(configurator.CONFIG.rack[0]);
-  configurator.applyProtection(configurator.CONFIG.protection[0]);
+  configurator.applyProtection(null);
   configurator.applyCharging([]);
   configurator.applyConnectivity(configurator.CONFIG.connectivity[0]);
   // Reset UI selections
   document.querySelectorAll('.color-swatch').forEach((s, i) => s.classList.toggle('active', i === 0));
   updateColorName(configurator.CONFIG.colors[0].name);
-  ['wheels','suspension','cargo','rack','protection','charging','connectivity'].forEach(cat => {
+  ['wheels','suspension','rack','connectivity'].forEach(cat => {
     document.querySelectorAll(`[data-category="${cat}"]`).forEach((o, i) => o.classList.toggle('active', i === 0));
+  });
+  // Cargo/protection are deselectable — clear all active
+  ['cargo','protection','charging'].forEach(cat => {
+    document.querySelectorAll(`[data-category="${cat}"]`).forEach(o => o.classList.remove('active'));
   });
   updatePrice();
 }
@@ -153,20 +316,24 @@ function buildConfigPanel() {
     autoSection.classList.toggle('collapsed');
   };
 
-  // Tab row: Default | Sport | Farm | Hunting
+  // Tab row: Custom | Sport | Farm | Hunting
   const tabRow = el('div', 'preset-tab-row');
   const presets = configurator.PRESETS;
 
-  // Default tab
-  const defaultTab = el('button', 'preset-tab');
-  defaultTab.setAttribute('data-preset', 'default');
-  defaultTab.textContent = 'Default';
-  defaultTab.onclick = () => {
+  // Custom tab — active by default; represents the user's current customized build
+  const customTab = el('button', 'preset-tab active');
+  customTab.setAttribute('data-preset', 'custom');
+  customTab.textContent = 'Custom';
+  customTab.onclick = () => {
+    // Deactivate all preset tabs and re-activate Custom
     document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
-    defaultTab.classList.add('active');
-    resetAllToDefaults();
+    customTab.classList.add('active');
+    // Reset environment preset; preserve all current option selections
+    actions.setEnvironment(null);
+    // Show the user's custom-build summary with friendly explanations of changes
+    showCustomSummary();
   };
-  tabRow.appendChild(defaultTab);
+  tabRow.appendChild(customTab);
 
   // Preset tabs (Sport, Farm, Hunting)
   Object.entries(presets).forEach(([id, preset]) => {
@@ -252,6 +419,7 @@ function buildConfigPanel() {
       configurator.applyColor(c);
       updateColorName(c.name);
       updatePrice();
+      markAsCustom();
     };
 
     colorGrid.appendChild(swatch);
@@ -263,25 +431,37 @@ function buildConfigPanel() {
 
   colorContent.appendChild(colorGrid);
   colorContent.appendChild(colorName);
+  colorSection.setAttribute('data-progress-section', 'Color');
   panel.appendChild(colorSection);
 
   // ── Wheels Section (no chevron) ──
-  panel.appendChild(createOptionSection('Wheels', CONFIG.wheels, 'wheels', configurator.applyWheels));
+  const wheelsSection = createOptionSection('Wheels', CONFIG.wheels, 'wheels', configurator.applyWheels);
+  wheelsSection.setAttribute('data-progress-section', 'Wheels');
+  panel.appendChild(wheelsSection);
 
   // ── Suspension Section (no chevron) ──
-  panel.appendChild(createOptionSection('Suspension', CONFIG.suspension, 'suspension', configurator.applySuspension));
+  const suspSection = createOptionSection('Suspension', CONFIG.suspension, 'suspension', configurator.applySuspension);
+  suspSection.setAttribute('data-progress-section', 'Suspension');
+  panel.appendChild(suspSection);
 
-  // ── Cargo Section (no chevron) ──
-  panel.appendChild(createOptionSection('Cargo', CONFIG.cargo, 'cargo', configurator.applyCargo));
+  // ── Cargo Section (no chevron, deselectable) ──
+  const cargoSection = createOptionSection('Cargo', CONFIG.cargo, 'cargo', configurator.applyCargo, false, true);
+  cargoSection.setAttribute('data-progress-section', 'Cargo');
+  panel.appendChild(cargoSection);
 
-  // ── Protection Section (no chevron) ──
-  panel.appendChild(createOptionSection('Protection', CONFIG.protection, 'protection', configurator.applyProtection));
+  // ── Protection Section (no chevron, deselectable) ──
+  const protSection = createOptionSection('Protection', CONFIG.protection, 'protection', configurator.applyProtection, false, true);
+  protSection.setAttribute('data-progress-section', 'Protection');
+  panel.appendChild(protSection);
 
   // ── Charging Section (NEW, no chevron, multi-select) ──
-  panel.appendChild(createOptionSection('Charging', CONFIG.charging, 'charging', configurator.applyCharging, true));
+  const chargingSection = createOptionSection('Charging', CONFIG.charging, 'charging', configurator.applyCharging, true);
+  chargingSection.setAttribute('data-progress-section', 'Charging');
+  panel.appendChild(chargingSection);
 
   // ── Stay Connected Anywhere Section (NEW, no chevron) ──
   const connSection = createOptionSection('Stay Connected Anywhere', CONFIG.connectivity, 'connectivity', configurator.applyConnectivity);
+  connSection.setAttribute('data-progress-section', 'Connect');
 
   // "Find ATV Trails" link at bottom of this section
   const trailLink = el('button', 'trail-link');
@@ -318,14 +498,14 @@ function createSection(title, collapsible = false) {
   return section;
 }
 
-function createOptionSection(title, options, category, applyFn, multiSelect = false) {
+function createOptionSection(title, options, category, applyFn, multiSelect = false, deselectable = false) {
   const section = createSection(title, false);
   const content = section.querySelector('.section-content');
   const optionsList = el('div', 'options-list');
 
   options.forEach((opt, i) => {
     const hasImg = !!opt.img;
-    const isFirstActive = !multiSelect && i === 0;
+    const isFirstActive = !multiSelect && !deselectable && i === 0;
     const optEl = el('button', `option-card ${isFirstActive ? 'active' : ''} ${hasImg ? 'option-card-img' : ''}`);
     optEl.setAttribute('data-category', category);
     optEl.setAttribute('data-option-id', opt.id);
@@ -365,6 +545,23 @@ function createOptionSection(title, options, category, applyFn, multiSelect = fa
         optEl.classList.toggle('active');
         applyFn(opt, true);
         updatePrice();
+        markAsCustom();
+      };
+    } else if (deselectable) {
+      optEl.onclick = () => {
+        const wasActive = optEl.classList.contains('active');
+        document.querySelectorAll(`[data-category="${category}"]`).forEach(o => o.classList.remove('active'));
+        if (wasActive) {
+          // Deselect — remove this option
+          applyFn(null);
+        } else {
+          optEl.classList.add('active');
+          applyFn(opt);
+          // Slight delay so accessory mesh is created before highlight reads it
+          setTimeout(() => actions.highlightPart?.(category), 50);
+        }
+        updatePrice();
+        markAsCustom();
       };
     } else {
       optEl.onclick = () => {
@@ -372,6 +569,8 @@ function createOptionSection(title, options, category, applyFn, multiSelect = fa
         optEl.classList.add('active');
         applyFn(opt);
         updatePrice();
+        actions.highlightPart?.(category);
+        markAsCustom();
       };
     }
 
@@ -497,9 +696,9 @@ function updatePriceBreakdown() {
     { label: `Color: ${state.color.name}`, value: state.color.price },
     { label: `Wheels: ${state.wheels.name}`, value: state.wheels.price },
     { label: `Suspension: ${state.suspension.name}`, value: state.suspension.price },
-    { label: `Cargo: ${state.cargo.name}`, value: state.cargo.price },
+    ...(state.cargo ? [{ label: `Cargo: ${state.cargo.name}`, value: state.cargo.price }] : []),
     { label: `Rack: ${state.rack.name}`, value: state.rack.price },
-    { label: `Protection: ${state.protection.name}`, value: state.protection.price },
+    ...(state.protection ? [{ label: `Protection: ${state.protection.name}`, value: state.protection.price }] : []),
     ...state.charging.map(c => ({ label: `Charging: ${c.name}`, value: c.price })),
     { label: `Connectivity: ${state.connectivity.name}`, value: state.connectivity.price },
   ].filter(l => l.value > 0);

@@ -11,18 +11,18 @@ export const CONFIG = {
     { id: 'ultra-blue', name: 'Ultra Blue', color: '#1e3a5f', metalness: 0.95, roughness: 0.2, price: 2000 },
   ],
   wheels: [
-    { id: 'standard', name: 'Standard 20"', scale: 1.0, roughness: 0.5, price: 0, desc: 'All-terrain balanced', img: '/images/wheel-standard.avif' },
-    { id: 'offroad', name: 'Off-Road 22"', scale: 1.12, roughness: 0.7, price: 1200, desc: 'Maximum traction', img: '/images/wheel-standard.avif' },
-    { id: 'performance', name: 'Performance 19"', scale: 0.95, roughness: 0.3, price: 2000, desc: 'Track-focused grip', img: '/images/wheel-performance.avif' },
+    { id: 'standard', name: 'Standard 20"', scale: 1.0, roughness: 0.5, price: 0, desc: 'Balanced grip for everyday riding', img: '/images/wheel-standard.avif' },
+    { id: 'offroad', name: 'Off-Road 22"', scale: 1.12, roughness: 0.7, price: 1200, desc: 'Wide treads — great for mud, rocks & rough trails', img: '/images/wheel-standard.avif' },
+    { id: 'performance', name: 'Performance 19"', scale: 0.95, roughness: 0.3, price: 2000, desc: 'Lower & lighter — sharpest cornering & top speed', img: '/images/wheel-performance.avif' },
   ],
   suspension: [
-    { id: 'standard', name: 'Standard', heightOffset: 0, price: 0, desc: 'Comfort-tuned adaptive' },
-    { id: 'performance', name: 'Performance', heightOffset: -0.05, price: 2500, desc: 'Lowered, sport-tuned' },
-    { id: 'offroad', name: 'Off-Road', heightOffset: 0.12, price: 3000, desc: 'Raised, long-travel' },
+    { id: 'standard', name: 'Standard', heightOffset: 0, price: 0, desc: 'Comfort-tuned — smooth on pavement & light trails' },
+    { id: 'performance', name: 'Performance', heightOffset: -0.05, price: 2500, desc: 'Lowered & stiff — track-precise handling at speed' },
+    { id: 'offroad', name: 'Off-Road', heightOffset: 0.12, price: 3000, desc: 'Raised long-travel — clears ditches, rocks & rough terrain' },
   ],
   cargo: [
-    { id: 'rear', name: 'Rear Storage', price: 800, desc: '15L compartment', img: '/images/cargo-rear.avif' },
-    { id: 'extended', name: 'Extended Cargo', price: 1500, desc: '40L modular system', img: '/images/cargo-extended.avif' },
+    { id: 'rear', name: 'Rear Storage', price: 800, desc: '15L sealed box — keeps gear dry on the trail', img: '/images/cargo-rear.avif' },
+    { id: 'extended', name: 'Extended Cargo', price: 1500, desc: '40L modular system — fits tools, supplies & gear', img: '/images/cargo-extended.avif' },
   ],
   rack: [
     { id: 'none', name: 'None', price: 0 },
@@ -30,8 +30,8 @@ export const CONFIG = {
     { id: 'sport', name: 'Sport Rack', price: 900, desc: 'Aerodynamic low-profile' },
   ],
   protection: [
-    { id: 'skid', name: 'Skid Plates', price: 700, desc: 'Underbody armor' },
-    { id: 'full', name: 'Full Guard', price: 1400, desc: 'Complete protection package' },
+    { id: 'skid', name: 'Skid Plates', price: 700, desc: 'Lightweight armor — protects under-body from rocks' },
+    { id: 'full', name: 'Full Guard', price: 1400, desc: 'Full coverage — rocks, stumps, brush & creek beds' },
   ],
   charging: [
     { id: 'home', name: 'Universal Home Charger', price: 1990, desc: 'Up to 44 mi range/hr', img: '/images/charger-home-38f6c8.png' },
@@ -49,9 +49,9 @@ export function createConfigurator(model, scene) {
     color: CONFIG.colors[0],
     wheels: CONFIG.wheels[0],
     suspension: CONFIG.suspension[0],
-    cargo: CONFIG.cargo[0],
+    cargo: null,
     rack: CONFIG.rack[0],
-    protection: CONFIG.protection[0],
+    protection: null,
     charging: [],  // multi-select: array of selected charging options
     connectivity: CONFIG.connectivity[0],
   };
@@ -75,6 +75,9 @@ export function createConfigurator(model, scene) {
                         'wing', 'cover', 'shroud', 'shield', 'front_piece'];
   const wheelKeywords = ['wheel', 'tire', 'tyre', 'rim'];
 
+  const suspensionMeshes = [];
+  const suspensionKeywords = ['spring', 'shock', 'a-arm', 'linkage', 'swing'];
+
   allMeshes.forEach((mesh) => {
     const name = (mesh.name || '').toLowerCase();
 
@@ -82,6 +85,9 @@ export function createConfigurator(model, scene) {
       wheelMeshes.push(mesh);
     } else if (bodyKeywords.some(b => name.includes(b))) {
       bodyMeshes.push(mesh);
+    }
+    if (suspensionKeywords.some(s => name.includes(s))) {
+      suspensionMeshes.push(mesh);
     }
     // Everything else (frame, seat, handlebars, misc, etc.) left alone
   });
@@ -261,7 +267,17 @@ export function createConfigurator(model, scene) {
 
   function applyCargo(cargoConfig) {
     state.cargo = cargoConfig;
-    createAccessoryMesh('cargo', cargoConfig);
+    if (cargoConfig) {
+      createAccessoryMesh('cargo', cargoConfig);
+    } else {
+      // Remove existing cargo mesh on deselect
+      if (accessories.cargo) {
+        scene.remove(accessories.cargo);
+        accessories.cargo.geometry.dispose();
+        accessories.cargo.material.dispose();
+        accessories.cargo = null;
+      }
+    }
   }
 
   function applyRack(rackConfig) {
@@ -271,7 +287,16 @@ export function createConfigurator(model, scene) {
 
   function applyProtection(protConfig) {
     state.protection = protConfig;
-    createAccessoryMesh('protection', protConfig);
+    if (protConfig) {
+      createAccessoryMesh('protection', protConfig);
+    } else {
+      if (accessories.protection) {
+        scene.remove(accessories.protection);
+        accessories.protection.geometry.dispose();
+        accessories.protection.material.dispose();
+        accessories.protection = null;
+      }
+    }
   }
 
   function applyCharging(chargingConfig, toggle = false) {
@@ -302,9 +327,9 @@ export function createConfigurator(model, scene) {
       + state.color.price
       + state.wheels.price
       + state.suspension.price
-      + state.cargo.price
+      + (state.cargo?.price || 0)
       + state.rack.price
-      + state.protection.price
+      + (state.protection?.price || 0)
       + state.charging.reduce((sum, c) => sum + c.price, 0)
       + state.connectivity.price;
   }
@@ -409,6 +434,18 @@ export function createConfigurator(model, scene) {
     });
   }
 
+  function getCategoryMeshes(category) {
+    switch (category) {
+      case 'wheels': return wheelMeshes;
+      case 'color': return bodyMeshes;
+      case 'suspension': return suspensionMeshes;
+      case 'cargo': return accessories.cargo ? [accessories.cargo] : [];
+      case 'rack': return accessories.rack ? [accessories.rack] : [];
+      case 'protection': return accessories.protection ? [accessories.protection] : [];
+      default: return [];
+    }
+  }
+
   return {
     applyColor,
     applyWheels,
@@ -421,6 +458,7 @@ export function createConfigurator(model, scene) {
     applyPreset,
     getTotalPrice,
     getState,
+    getCategoryMeshes,
     CONFIG,
     BASE_PRICE,
     PRESETS,
