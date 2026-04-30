@@ -193,6 +193,12 @@ body.night-mode .logo-img {
   border-radius: var(--radius);
   padding: 3px;
   border: 1px solid var(--border);
+  width: 352px;
+}
+
+.view-buttons .view-btn {
+  flex: 1;
+  text-align: center;
 }
 
 .view-btn {
