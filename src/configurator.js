@@ -53,7 +53,7 @@ export function createConfigurator(model, scene) {
     rack: CONFIG.rack[0],
     protection: null,
     charging: [],  // multi-select: array of selected charging options
-    connectivity: CONFIG.connectivity[0],
+    connectivity: null,
   };
 
   // Collect body meshes from model
@@ -331,7 +331,7 @@ export function createConfigurator(model, scene) {
       + state.rack.price
       + (state.protection?.price || 0)
       + state.charging.reduce((sum, c) => sum + c.price, 0)
-      + state.connectivity.price;
+      + (state.connectivity?.price || 0);
   }
 
   function getState() {

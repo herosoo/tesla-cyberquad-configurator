@@ -646,11 +646,11 @@ function highlightPart(category) {
   }));
 
   // Apply yellow emissive immediately
-  const HIGHLIGHT_COLOR = new THREE.Color(0xffd400);
+  const HIGHLIGHT_COLOR = new THREE.Color(0xfff200);
   meshes.forEach(m => {
     if (!m.material.emissive) m.material.emissive = new THREE.Color();
     m.material.emissive.copy(HIGHLIGHT_COLOR);
-    m.material.emissiveIntensity = 0.7;
+    m.material.emissiveIntensity = 0.3;
     m.material.needsUpdate = true;
   });
 
@@ -724,18 +724,18 @@ function highlightPart(category) {
     });
   }
 
-  // Phase 1: Smooth move from CURRENT pose to part view (1500ms)
-  // Phase 2: Hold for 5500ms with emissive ON
-  // Phase 3: Revert emissive only — camera STAYS at part view (no auto-return)
-  animateTo(fromPos, fromTarget, toPos, toTarget, 1500, () => {
+  // Phase 1: Smooth move from CURRENT pose to part view (500ms)
+  // Phase 2: Hold for 500ms with emissive ON
+  // Phase 3: Revert emissive only — camera STAYS at part view
+  // Total yellow-highlight visible time: ~1 second
+  animateTo(fromPos, fromTarget, toPos, toTarget, 500, () => {
     if (cancelled) return;
     holdTimeout = setTimeout(() => {
       if (cancelled) return;
       revertEmissive();
       // Leave camera at the part view; user can drag freely
-      // Don't reset isUserInteracting — let OrbitControls 'end' event handle it on next drag
       activeHighlight = null;
-    }, 5500);
+    }, 500);
   });
 
   activeHighlight = {

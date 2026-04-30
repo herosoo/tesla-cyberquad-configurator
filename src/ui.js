@@ -58,7 +58,6 @@ export function initUI(cfg, act) {
   buildTrailModal();
   updatePrice();
   setupViewButtons();
-  setupDayNightToggle();
   setupPriceBreakdown();
   setupOrderButton();
   setupAIChatButton();
@@ -140,6 +139,22 @@ function markAsCustom() {
   showCustomSummary();
 }
 
+// Monoline 16px SVG icons for each configurable category — used in the
+// Custom build summary to identify what changed at a glance.
+function getCategoryIcon(category) {
+  const stroke = `stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+  const ICONS = {
+    color: `<svg viewBox="0 0 16 16" ${stroke}><circle cx="8" cy="8" r="5"/><path d="M8 3v10M3 8h10"/></svg>`,
+    wheels: `<svg viewBox="0 0 16 16" ${stroke}><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2"/><path d="M8 2v3M8 11v3M2 8h3M11 8h3"/></svg>`,
+    suspension: `<svg viewBox="0 0 16 16" ${stroke}><path d="M4 2v12M12 2v12"/><path d="M4 4l8 2-8 2 8 2-8 2"/></svg>`,
+    cargo: `<svg viewBox="0 0 16 16" ${stroke}><rect x="2.5" y="4.5" width="11" height="8" rx="1"/><path d="M2.5 7.5h11"/></svg>`,
+    protection: `<svg viewBox="0 0 16 16" ${stroke}><path d="M8 2l5 2v4c0 3-2 5-5 6-3-1-5-3-5-6V4l5-2z"/></svg>`,
+    charging: `<svg viewBox="0 0 16 16" ${stroke}><path d="M9 2L4 9h3l-1 5 5-7H8l1-5z"/></svg>`,
+    connectivity: `<svg viewBox="0 0 16 16" ${stroke}><path d="M3 9c1-1 3-2 5-2s4 1 5 2"/><path d="M5 11c0.5-0.5 1.5-1 3-1s2.5 0.5 3 1"/><circle cx="8" cy="13" r="0.6" fill="currentColor"/></svg>`,
+  };
+  return ICONS[category] || ICONS.color;
+}
+
 // Render the user's custom-build summary into the rationale container.
 // Shows only options that differ from the factory default, with friendly
 // explanations of what each change does.
@@ -152,27 +167,27 @@ function showCustomSummary() {
   const changes = [];
 
   if (state.color && state.color.id !== CONFIG.colors[0].id) {
-    changes.push({ feature: state.color.name, reason: 'Custom exterior color finish' });
+    changes.push({ category: 'color', feature: state.color.name, reason: 'Custom exterior color finish' });
   }
   if (state.wheels && state.wheels.id !== CONFIG.wheels[0].id) {
-    changes.push({ feature: state.wheels.name, reason: state.wheels.desc });
+    changes.push({ category: 'wheels', feature: state.wheels.name, reason: state.wheels.desc });
   }
   if (state.suspension && state.suspension.id !== CONFIG.suspension[0].id) {
-    changes.push({ feature: state.suspension.name, reason: state.suspension.desc });
+    changes.push({ category: 'suspension', feature: state.suspension.name, reason: state.suspension.desc });
   }
   if (state.cargo) {
-    changes.push({ feature: state.cargo.name, reason: state.cargo.desc });
+    changes.push({ category: 'cargo', feature: state.cargo.name, reason: state.cargo.desc });
   }
   if (state.protection) {
-    changes.push({ feature: state.protection.name, reason: state.protection.desc });
+    changes.push({ category: 'protection', feature: state.protection.name, reason: state.protection.desc });
   }
   if (state.charging && state.charging.length > 0) {
     state.charging.forEach(c => {
-      changes.push({ feature: c.name, reason: c.desc });
+      changes.push({ category: 'charging', feature: c.name, reason: c.desc });
     });
   }
-  if (state.connectivity && state.connectivity.id !== CONFIG.connectivity[0].id) {
-    changes.push({ feature: state.connectivity.name, reason: state.connectivity.desc });
+  if (state.connectivity) {
+    changes.push({ category: 'connectivity', feature: state.connectivity.name, reason: state.connectivity.desc });
   }
 
   // Animate out → rebuild → animate in
@@ -200,8 +215,9 @@ function showCustomSummary() {
     changes.forEach(item => {
       const row = el('div', 'rationale-row');
 
-      const dot = el('span', 'rationale-dot');
-      row.appendChild(dot);
+      const iconWrap = el('span', 'rationale-icon');
+      iconWrap.innerHTML = getCategoryIcon(item.category);
+      row.appendChild(iconWrap);
 
       const text = el('div', 'rationale-text');
       const feature = el('span', 'rationale-feature');
@@ -239,15 +255,15 @@ function resetAllToDefaults() {
   configurator.applyRack(configurator.CONFIG.rack[0]);
   configurator.applyProtection(null);
   configurator.applyCharging([]);
-  configurator.applyConnectivity(configurator.CONFIG.connectivity[0]);
+  configurator.applyConnectivity(null);
   // Reset UI selections
   document.querySelectorAll('.color-swatch').forEach((s, i) => s.classList.toggle('active', i === 0));
   updateColorName(configurator.CONFIG.colors[0].name);
-  ['wheels','suspension','rack','connectivity'].forEach(cat => {
+  ['wheels','suspension','rack'].forEach(cat => {
     document.querySelectorAll(`[data-category="${cat}"]`).forEach((o, i) => o.classList.toggle('active', i === 0));
   });
-  // Cargo/protection are deselectable — clear all active
-  ['cargo','protection','charging'].forEach(cat => {
+  // Cargo/protection/charging/connectivity are deselectable — clear all active
+  ['cargo','protection','charging','connectivity'].forEach(cat => {
     document.querySelectorAll(`[data-category="${cat}"]`).forEach(o => o.classList.remove('active'));
   });
   updatePrice();
@@ -278,12 +294,12 @@ function buildConfigPanel() {
   ];
   specsData.forEach(spec => {
     const col = el('div', 'specs-col');
-    const val = el('div', 'specs-value');
-    val.textContent = spec.value;
     const lbl = el('div', 'specs-label');
     lbl.textContent = spec.label;
-    col.appendChild(val);
+    const val = el('div', 'specs-value');
+    val.textContent = spec.value;
     col.appendChild(lbl);
+    col.appendChild(val);
     specsBar.appendChild(col);
   });
   specsSection.appendChild(specsBar);
@@ -459,8 +475,8 @@ function buildConfigPanel() {
   chargingSection.setAttribute('data-progress-section', 'Charging');
   panel.appendChild(chargingSection);
 
-  // ── Stay Connected Anywhere Section (NEW, no chevron) ──
-  const connSection = createOptionSection('Stay Connected Anywhere', CONFIG.connectivity, 'connectivity', configurator.applyConnectivity);
+  // ── Stay Connected Anywhere Section (NEW, no chevron, deselectable) ──
+  const connSection = createOptionSection('Stay Connected Anywhere', CONFIG.connectivity, 'connectivity', configurator.applyConnectivity, false, true);
   connSection.setAttribute('data-progress-section', 'Connect');
 
   // "Find ATV Trails" link at bottom of this section
@@ -691,21 +707,40 @@ function updatePriceBreakdown() {
   if (!tooltip || !configurator) return;
 
   const state = configurator.getState();
+
+  // Build line items (skip $0 add-ons)
   const lines = [
-    { label: 'Base Price', value: BASE_PRICE },
-    { label: `Color: ${state.color.name}`, value: state.color.price },
-    { label: `Wheels: ${state.wheels.name}`, value: state.wheels.price },
-    { label: `Suspension: ${state.suspension.name}`, value: state.suspension.price },
-    ...(state.cargo ? [{ label: `Cargo: ${state.cargo.name}`, value: state.cargo.price }] : []),
-    { label: `Rack: ${state.rack.name}`, value: state.rack.price },
-    ...(state.protection ? [{ label: `Protection: ${state.protection.name}`, value: state.protection.price }] : []),
-    ...state.charging.map(c => ({ label: `Charging: ${c.name}`, value: c.price })),
-    { label: `Connectivity: ${state.connectivity.name}`, value: state.connectivity.price },
+    { label: 'Base Vehicle', value: BASE_PRICE },
+    { label: state.color.name, value: state.color.price },
+    { label: state.wheels.name, value: state.wheels.price },
+    { label: state.suspension.name, value: state.suspension.price },
+    ...(state.cargo ? [{ label: state.cargo.name, value: state.cargo.price }] : []),
+    { label: state.rack.name, value: state.rack.price },
+    ...(state.protection ? [{ label: state.protection.name, value: state.protection.price }] : []),
+    ...state.charging.map(c => ({ label: c.name, value: c.price })),
+    ...(state.connectivity ? [{ label: state.connectivity.name, value: state.connectivity.price }] : []),
   ].filter(l => l.value > 0);
 
-  tooltip.innerHTML = lines.map(l =>
-    `<div class="breakdown-row"><span>${l.label}</span><span>$${l.value.toLocaleString()}</span></div>`
-  ).join('');
+  const total = lines.reduce((sum, l) => sum + l.value, 0);
+
+  const headerHtml = `
+    <div class="breakdown-header">
+      <div class="breakdown-header-left">
+        <div class="breakdown-header-title">Est. Purchase Price</div>
+        <div class="breakdown-header-sub">Includes selected accessories</div>
+      </div>
+      <div class="breakdown-header-total">$${total.toLocaleString()}</div>
+    </div>
+  `;
+
+  const itemsHtml = lines.map(l => `
+    <div class="breakdown-row">
+      <span class="breakdown-label">${l.label}</span>
+      <span class="breakdown-value">$${l.value.toLocaleString()}</span>
+    </div>
+  `).join('');
+
+  tooltip.innerHTML = headerHtml + `<div class="breakdown-list">${itemsHtml}</div>`;
 }
 
 function setupOrderButton() {
@@ -878,35 +913,55 @@ function setupAIChatButton() {
   const appUI = document.getElementById('app-ui');
   if (!appUI) return;
 
-  // Chat button (left bottom)
+  // Chat button (left bottom) — dark rounded square with white chat-bubble icon
   const chatBtn = el('button', 'ai-chat-btn');
   chatBtn.title = 'Ask AI about your build';
   chatBtn.innerHTML = `
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 3c-4.97 0-9 3.13-9 7 0 2.38 1.56 4.5 4 5.74V20l3.27-2.18c.56.1 1.14.18 1.73.18 4.97 0 9-3.13 9-7s-4.03-7-9-7z"/>
-      <circle cx="8.5" cy="10.5" r="0.75" fill="currentColor" stroke="none"/>
-      <circle cx="12" cy="10.5" r="0.75" fill="currentColor" stroke="none"/>
-      <circle cx="15.5" cy="10.5" r="0.75" fill="currentColor" stroke="none"/>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-4 3v-3H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+      <circle cx="9" cy="10.5" r="1" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="10.5" r="1" fill="currentColor" stroke="none"/>
+      <circle cx="15" cy="10.5" r="1" fill="currentColor" stroke="none"/>
     </svg>
-    <span class="ai-chat-label">AI</span>
   `;
 
   // Chat panel
   const chatPanel = el('div', 'ai-chat-panel');
   chatPanel.innerHTML = `
     <div class="ai-chat-panel-header">
-      <span class="ai-chat-panel-title">AI Assistant</span>
-      <button class="ai-chat-panel-close">&times;</button>
+      <button class="ai-chat-panel-minimize" aria-label="Minimize">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <span class="ai-chat-panel-title">Tesla Assist</span>
+      <button class="ai-chat-panel-close" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
     </div>
     <div class="ai-chat-messages" id="ai-chat-messages">
       <div class="ai-chat-msg ai-msg">
-        <div class="ai-chat-bubble">Hi! I can help you configure your Cyberquad. Ask me about builds, trails, or specs.</div>
+        <div class="ai-msg-row">
+          <div class="ai-avatar" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 342 35" fill="currentColor"><path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h6.8V7.3L26 7h11a9.8 9.8 0 0 0 7-7H0zm238.6 0h-6.8v34.8H263a9.7 9.7 0 0 0 6-6.8h-30.3V0zm-52.3 6.8c3.6-1 6.6-3.8 7.4-6.9l-38.1.1v20.6h31.1v7.2h-24.4a13.6 13.6 0 0 0-8.7 7h39.9v-21h-31.2v-7zm116.2 28h6.7v-14h24.6v14h6.7v-21h-38zM85.3 7h26a9.6 9.6 0 0 0 7.1-7H78.3a9.6 9.6 0 0 0 7 7zm0 13.8h26a9.6 9.6 0 0 0 7.1-7H78.3a9.6 9.6 0 0 0 7 7zm0 14.1h26a9.6 9.6 0 0 0 7.1-7H78.3a9.6 9.6 0 0 0 7 7zM308.5 7h26a9.6 9.6 0 0 0 7.1-7h-40.2a9.6 9.6 0 0 0 7 7z"/></svg>
+          </div>
+          <div class="ai-chat-bubble">Hello! How can I help you today?</div>
+        </div>
+        <div class="ai-msg-feedback">
+          <button class="feedback-btn" aria-label="Helpful">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+          </button>
+          <button class="feedback-btn" aria-label="Not helpful">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+          </button>
+        </div>
       </div>
     </div>
+    <div class="ai-chat-disclaimer">
+      Tesla Assist uses AI, mistakes may occur. <a href="#" class="ai-chat-tcs">T&amp;Cs Apply</a>
+    </div>
     <div class="ai-chat-input-row">
-      <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="Ask about your build..." />
-      <button class="ai-chat-send" id="ai-chat-send">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="Type a new message" />
+      <button class="ai-chat-send" id="ai-chat-send" aria-label="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
       </button>
     </div>
   `;
@@ -918,6 +973,11 @@ function setupAIChatButton() {
 
   // Close button inside panel
   chatPanel.querySelector('.ai-chat-panel-close').onclick = () => {
+    chatPanel.classList.remove('open');
+    chatBtn.classList.remove('hidden');
+  };
+  // Minimize button — same behaviour as close (hides panel, shows FAB)
+  chatPanel.querySelector('.ai-chat-panel-minimize').onclick = () => {
     chatPanel.classList.remove('open');
     chatBtn.classList.remove('hidden');
   };
