@@ -232,9 +232,6 @@ function showCustomSummary() {
     label.textContent = 'Your custom build';
     header.appendChild(label);
 
-    const subtitle = el('span', 'rationale-subtitle');
-    subtitle.textContent = `${changes.length} change${changes.length > 1 ? 's' : ''} from default`;
-    header.appendChild(subtitle);
     container.appendChild(header);
 
     const list = el('div', 'rationale-list');
@@ -861,8 +858,50 @@ function buildCompareModal() {
   const closeBtn = document.getElementById('compare-close');
   if (!modal || !body || !closeBtn) return;
 
+  // Clear previous contents (modal rebuilds each open to reflect current custom state)
+  body.innerHTML = '';
+
   const presets = configurator.PRESETS;
   const presetEntries = Object.entries(presets);
+
+  // Build a "Custom" pseudo-preset from the current configurator state, but only
+  // include it if the user has actually customized something away from defaults.
+  const state = configurator.getState();
+  const CONFIG = configurator.CONFIG;
+  const hasCustomChanges =
+    (state.color && state.color.id !== CONFIG.colors[0].id) ||
+    (state.wheels && state.wheels.id !== CONFIG.wheels[0].id) ||
+    (state.suspension && state.suspension.id !== CONFIG.suspension[0].id) ||
+    !!state.cargo ||
+    !!state.protection ||
+    (state.charging && state.charging.length > 0) ||
+    !!state.connectivity;
+
+  if (hasCustomChanges) {
+    const chargingName = state.charging && state.charging.length
+      ? state.charging.map(c => c.name).join(', ')
+      : '—';
+    presetEntries.push(['custom', {
+      name: 'Custom',
+      desc: 'Your current build',
+      color: state.color,
+      wheels: state.wheels || CONFIG.wheels[0],
+      suspension: state.suspension || CONFIG.suspension[0],
+      cargo: state.cargo || { name: '—', price: 0 },
+      rack: state.rack || CONFIG.rack[0],
+      protection: state.protection || { name: '—', price: 0 },
+      charging: { name: chargingName, price: state.charging ? state.charging.reduce((s,c)=>s+(c.price||0),0) : 0 },
+      connectivity: state.connectivity || { name: '—', price: 0 },
+      specs: {
+        range: '60 mi',
+        topSpeed: '60 mph',
+        accel: '8.1 sec',
+        payload: '500 lbs',
+        groundClearance: '12 in',
+      },
+      _isCustom: true,
+    }]);
+  }
 
   // Column headers (preset name + total price)
   const headerRow = el('div', 'compare-row compare-row-header');
@@ -874,7 +913,8 @@ function buildCompareModal() {
     cell.appendChild(name);
     const price = el('div', 'compare-preset-price');
     const total = configurator.BASE_PRICE + (p.color?.price || 0) + (p.wheels?.price || 0)
-      + (p.suspension?.price || 0) + (p.cargo?.price || 0) + (p.rack?.price || 0) + (p.protection?.price || 0);
+      + (p.suspension?.price || 0) + (p.cargo?.price || 0) + (p.rack?.price || 0) + (p.protection?.price || 0)
+      + (p.charging?.price || 0) + (p.connectivity?.price || 0);
     price.textContent = `$${total.toLocaleString()}`;
     cell.appendChild(price);
     const desc = el('div', 'compare-preset-desc');
@@ -908,11 +948,14 @@ function buildCompareModal() {
 
   // Equipment rows
   const equipRows = [
-    { label: 'Suspension', get: (p) => p.suspension.name },
-    { label: 'Wheels', get: (p) => p.wheels.name },
-    { label: 'Cargo', get: (p) => p.cargo.name },
-    { label: 'Rack', get: (p) => p.rack.name },
-    { label: 'Protection', get: (p) => p.protection.name },
+    { label: 'Color', get: (p) => p.color?.name || '—' },
+    { label: 'Suspension', get: (p) => p.suspension?.name || '—' },
+    { label: 'Wheels', get: (p) => p.wheels?.name || '—' },
+    { label: 'Cargo', get: (p) => p.cargo?.name || '—' },
+    { label: 'Rack', get: (p) => p.rack?.name || '—' },
+    { label: 'Protection', get: (p) => p.protection?.name || '—' },
+    { label: 'Charging', get: (p) => p.charging?.name || '—' },
+    { label: 'Connectivity', get: (p) => p.connectivity?.name || '—' },
   ];
 
   const equipHeader = el('div', 'compare-row compare-row-divider');
@@ -941,8 +984,13 @@ function buildCompareModal() {
   presetEntries.forEach(([id, p]) => {
     const cell = el('div', 'compare-cell');
     const btn = el('button', 'compare-select-btn');
-    btn.textContent = `Select ${p.name}`;
+    btn.textContent = p._isCustom ? 'Current Build' : `Select ${p.name}`;
+    if (p._isCustom) {
+      btn.disabled = true;
+      btn.classList.add('compare-select-btn-current');
+    }
     btn.onclick = () => {
+      if (p._isCustom) { closeCompareModal(); return; }
       // Apply preset
       document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
       const matchTab = document.querySelector(`.preset-tab[data-preset="${id}"]`);
@@ -964,6 +1012,8 @@ function buildCompareModal() {
 function openCompareModal() {
   const modal = document.getElementById('compare-modal');
   if (modal) {
+    // Rebuild every open so the Custom column reflects the current state
+    buildCompareModal();
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
