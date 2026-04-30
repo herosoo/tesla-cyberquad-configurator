@@ -258,7 +258,7 @@ body.night-mode .view-btn.active {
   position: absolute;
   top: 80px;
   right: 24px;
-  bottom: 68px;
+  bottom: 0;
   width: 352px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -279,7 +279,7 @@ body.night-mode .view-btn.active {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-bottom: 24px;
+  padding-bottom: 88px; /* clearance for fixed bottom bar (~58px) + breathing room */
 }
 
 /* ─── Panel Logo Header ─── */
@@ -778,6 +778,11 @@ body.night-mode .option-card.active {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
+  /* Reserve space on the right so descriptions wrap at the same width
+     whether or not the option has a visible price */
+  padding-right: 64px;
 }
 
 .option-name {
@@ -811,12 +816,15 @@ body.night-mode .option-desc {
 }
 
 .option-price {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
   font-family: var(--font);
   font-size: 13px;
   font-weight: 400;
   color: var(--text-muted);
   white-space: nowrap;
-  margin-left: 16px;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }
@@ -1038,6 +1046,146 @@ body.night-mode .progress-dot.active:hover {
   }
 }
 
+/* ─── Inline Checkout Summary (end of side menu) ─── */
+.checkout-summary {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  scroll-margin-top: 16px;
+}
+
+.checkout-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.checkout-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checkout-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: #171A20;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.checkout-sub {
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.checkout-total {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: #171A20;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  white-space: nowrap;
+}
+
+.checkout-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkout-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 9px 0;
+}
+
+.checkout-row-label {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 400;
+  color: #171A20;
+  line-height: 1.4;
+}
+
+.checkout-row-value {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 400;
+  color: #171A20;
+  line-height: 1.4;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.checkout-divider {
+  height: 1px;
+  background: var(--hairline);
+  margin: 12px 0 14px;
+}
+
+.checkout-due {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.checkout-due-label {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: #171A20;
+  letter-spacing: -0.2px;
+}
+
+.checkout-due-value {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: #171A20;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.checkout-cta {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+}
+
+.checkout-terms {
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 14px;
+  text-align: center;
+}
+
+.checkout-terms a {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
 /* ─── Bottom Bar (same width as side menu, right-aligned) ─── */
 .bottom-bar {
   position: fixed;
@@ -1054,6 +1202,14 @@ body.night-mode .progress-dot.active:hover {
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.05);
   z-index: 25;
   box-sizing: border-box;
+  transition: opacity 0.28s var(--ease-spring),
+              transform 0.28s var(--ease-spring);
+}
+
+.bottom-bar.hidden {
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
 }
 
 body.night-mode .bottom-bar {

@@ -62,6 +62,32 @@ export function initUI(cfg, act) {
   setupOrderButton();
   setupAIChatButton();
   setupProgressIndicator();
+  setupCheckoutVisibility();
+}
+
+// Fade out the fixed bottom bar (Vehicle Price + Order Now) when the inline
+// checkout summary scrolls into view. Avoids visual duplication and lets the
+// summary feel like the "flat" landing card at the bottom of the menu.
+function setupCheckoutVisibility() {
+  const wrapper = document.querySelector('.config-panel-wrapper');
+  const bottomBar = document.querySelector('.bottom-bar');
+  const summary = document.getElementById('checkout-summary');
+  if (!wrapper || !bottomBar || !summary) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.intersectionRatio > 0.2) {
+        bottomBar.classList.add('hidden');
+      } else {
+        bottomBar.classList.remove('hidden');
+      }
+    });
+  }, {
+    root: wrapper,
+    threshold: [0, 0.2, 0.4, 0.6, 0.8, 1],
+  });
+
+  observer.observe(summary);
 }
 
 // ─── Progress Indicator (vertical dots on right edge of side menu) ───
@@ -214,10 +240,6 @@ function showCustomSummary() {
     const list = el('div', 'rationale-list');
     changes.forEach(item => {
       const row = el('div', 'rationale-row');
-
-      const iconWrap = el('span', 'rationale-icon');
-      iconWrap.innerHTML = getCategoryIcon(item.category);
-      row.appendChild(iconWrap);
 
       const text = el('div', 'rationale-text');
       const feature = el('span', 'rationale-feature');
@@ -486,6 +508,28 @@ function buildConfigPanel() {
   connSection.appendChild(trailLink);
   panel.appendChild(connSection);
 
+  // ── Checkout Summary (inline, appears at end of scroll) ──
+  const checkoutCard = el('div', 'checkout-summary');
+  checkoutCard.id = 'checkout-summary';
+  checkoutCard.innerHTML = `
+    <div class="checkout-header">
+      <div class="checkout-header-text">
+        <div class="checkout-title">Est. Purchase Price</div>
+        <div class="checkout-sub">Includes selected accessories</div>
+      </div>
+      <div class="checkout-total" id="checkout-total">$3,990</div>
+    </div>
+    <div class="checkout-list" id="checkout-list"></div>
+    <div class="checkout-divider"></div>
+    <div class="checkout-due">
+      <span class="checkout-due-label">Due Today</span>
+      <span class="checkout-due-value" id="checkout-due-value">$250</span>
+    </div>
+    <button class="cta-button checkout-cta" id="checkout-place-order">Place Order</button>
+    <p class="checkout-terms">By placing this order, you agree to the <a href="#">Order Agreement</a>, <a href="#">Terms of Use</a>, and <a href="#">Privacy Notice</a>.</p>
+  `;
+  panel.appendChild(checkoutCard);
+
 }
 
 function createSection(title, collapsible = false) {
@@ -704,7 +748,7 @@ function setupPriceBreakdown() {
 
 function updatePriceBreakdown() {
   const tooltip = document.getElementById('price-breakdown');
-  if (!tooltip || !configurator) return;
+  if (!configurator) return;
 
   const state = configurator.getState();
 
@@ -723,46 +767,70 @@ function updatePriceBreakdown() {
 
   const total = lines.reduce((sum, l) => sum + l.value, 0);
 
-  const headerHtml = `
-    <div class="breakdown-header">
-      <div class="breakdown-header-left">
-        <div class="breakdown-header-title">Est. Purchase Price</div>
-        <div class="breakdown-header-sub">Includes selected accessories</div>
+  // Hover tooltip (above price)
+  if (tooltip) {
+    const headerHtml = `
+      <div class="breakdown-header">
+        <div class="breakdown-header-left">
+          <div class="breakdown-header-title">Est. Purchase Price</div>
+          <div class="breakdown-header-sub">Includes selected accessories</div>
+        </div>
+        <div class="breakdown-header-total">$${total.toLocaleString()}</div>
       </div>
-      <div class="breakdown-header-total">$${total.toLocaleString()}</div>
-    </div>
-  `;
+    `;
+    const itemsHtml = lines.map(l => `
+      <div class="breakdown-row">
+        <span class="breakdown-label">${l.label}</span>
+        <span class="breakdown-value">$${l.value.toLocaleString()}</span>
+      </div>
+    `).join('');
+    tooltip.innerHTML = headerHtml + `<div class="breakdown-list">${itemsHtml}</div>`;
+  }
 
-  const itemsHtml = lines.map(l => `
-    <div class="breakdown-row">
-      <span class="breakdown-label">${l.label}</span>
-      <span class="breakdown-value">$${l.value.toLocaleString()}</span>
-    </div>
-  `).join('');
-
-  tooltip.innerHTML = headerHtml + `<div class="breakdown-list">${itemsHtml}</div>`;
+  // Inline checkout summary card at bottom of panel
+  const summaryTotal = document.getElementById('checkout-total');
+  const summaryList = document.getElementById('checkout-list');
+  if (summaryTotal) summaryTotal.textContent = `$${total.toLocaleString()}`;
+  if (summaryList) {
+    summaryList.innerHTML = lines.map(l => `
+      <div class="checkout-row">
+        <span class="checkout-row-label">${l.label}</span>
+        <span class="checkout-row-value">$${l.value.toLocaleString()}</span>
+      </div>
+    `).join('');
+  }
 }
 
 function setupOrderButton() {
-  const btn = document.querySelector('.cta-button');
-  if (!btn) return;
+  // Top "Order Now" button in the fixed bottom bar \u2014 scrolls to checkout summary
+  const topBtn = document.querySelector('.bottom-bar .cta-button');
+  const summary = document.getElementById('checkout-summary');
+  if (topBtn && summary) {
+    topBtn.onclick = () => {
+      summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  }
 
-  btn.onclick = () => {
-    btn.classList.add('ordered');
-    btn.textContent = 'Reserved \u2713';
-    btn.style.pointerEvents = 'none';
+  // Inline "Place Order" button inside the checkout summary \u2014 triggers the actual order
+  const placeBtn = document.getElementById('checkout-place-order');
+  if (placeBtn) {
+    placeBtn.onclick = () => {
+      placeBtn.classList.add('ordered');
+      placeBtn.textContent = 'Reserved \u2713';
+      placeBtn.style.pointerEvents = 'none';
 
-    // Flash effect
-    const flash = el('div', 'order-flash');
-    document.body.appendChild(flash);
-    setTimeout(() => flash.remove(), 800);
+      // Flash effect
+      const flash = el('div', 'order-flash');
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 800);
 
-    setTimeout(() => {
-      btn.classList.remove('ordered');
-      btn.textContent = 'Order Now';
-      btn.style.pointerEvents = '';
-    }, 3000);
-  };
+      setTimeout(() => {
+        placeBtn.classList.remove('ordered');
+        placeBtn.textContent = 'Place Order';
+        placeBtn.style.pointerEvents = '';
+      }, 3000);
+    };
+  }
 }
 
 function setupViewButtons() {
