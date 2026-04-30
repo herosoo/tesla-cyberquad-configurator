@@ -864,6 +864,8 @@ function buildCompareModal() {
   const presets = configurator.PRESETS;
   const presetEntries = Object.entries(presets);
 
+  // Will set --compare-cols once we know whether Custom column is added (below)
+
   // Build a "Custom" pseudo-preset from the current configurator state, but only
   // include it if the user has actually customized something away from defaults.
   const state = configurator.getState();
@@ -902,6 +904,9 @@ function buildCompareModal() {
       _isCustom: true,
     }]);
   }
+
+  // Set grid column count to match number of preset columns
+  body.style.setProperty('--compare-cols', presetEntries.length);
 
   // Column headers (preset name + total price)
   const headerRow = el('div', 'compare-row compare-row-header');
