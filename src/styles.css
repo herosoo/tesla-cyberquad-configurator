@@ -156,7 +156,7 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 32px;
+  padding: 20px 24px 20px 32px;
   z-index: 20;
 }
 
